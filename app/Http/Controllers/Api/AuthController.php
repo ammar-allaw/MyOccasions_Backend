@@ -45,7 +45,7 @@ class AuthController extends Controller
             $userToken = $user->createToken($dive_name);
             return $this->handler->successResponse(
                 true,
-                'success registration user',
+                'success registration',
                 ['user' => new UserResource($user), 'token' => $userToken->plainTextToken],
                 200,);
         }catch(Exception $e){
