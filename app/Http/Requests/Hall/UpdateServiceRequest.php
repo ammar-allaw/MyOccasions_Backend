@@ -31,7 +31,7 @@ class UpdateServiceRequest extends FormRequest
                 'string',
                 // $this->uniqueServiceRule('name'),
             ],
-            'description' => 'nullable|string|min:10',
+            'description' => 'nullable|string|min:10|max:500',
 
             'name_en' => [
                 'nullable',
@@ -39,7 +39,7 @@ class UpdateServiceRequest extends FormRequest
                 // $this->uniqueServiceRule('name_en'),
 
             ],
-            'description_en' => 'nullable|string|min:10',
+            'description_en' => 'nullable|string|min:10|max:500',
 
             'price' =>'nullable|integer|min:0',
             'room_id' => 'nullable|array',

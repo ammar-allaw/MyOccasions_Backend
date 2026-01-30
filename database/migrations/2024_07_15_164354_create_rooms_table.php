@@ -17,9 +17,9 @@ return new class extends Migration
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->string('description');
+            $table->text('description');
             $table->string('name_en')->nullable();
-            $table->string('description_en')->nullable();
+            $table->text('description_en')->nullable();
             $table->integer('rent_price');
             $table->integer('capacity');
             $table->foreignIdFor(ServiceProvider::class)->nullable()

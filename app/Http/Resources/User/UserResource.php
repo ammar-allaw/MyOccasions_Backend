@@ -31,7 +31,7 @@ class UserResource extends JsonResource
                 'id' => $this->id,
                 'phone_number' => $this->phone_number,
                 'role_id' => $this->role->id,
-                'role_name_ar' => $this->role->name_ar ?? $this->role->name_en,
+                'role_name_ar' => $this->role->name ?? $this->role->name_en,
                 'role_name_en' => $this->role->name_en,
                 'userable_id' => $this->userable_id,
                 'userable_type' => $this->userable_type,
@@ -64,6 +64,7 @@ class UserResource extends JsonResource
                         'url' => url('storage/' . $media->id . '/' . $media->file_name),
                     ];
                 })->toArray(),
+                'models' => $this->getModelsInfo(),
             ];
 
             if ($this->userable_type === 'App\Models\Client' && $this->userable) {
@@ -72,6 +73,13 @@ class UserResource extends JsonResource
                 $data['userable']['government_id'] = $this->userable->government_id ?? null;
                 $data['userable']['government_name'] = $government 
                     ? ($locale === 'en' ? $government->name_en : $government->name) 
+                    : null;
+            }
+
+            if ($this->userable_type === 'App\Models\ServiceProvider' && $this->userable) {
+                $region = $this->userable->region;
+                $data['userable']['region_name'] = $region 
+                    ? ($locale === 'en' ? $region->name_en : $region->name) 
                     : null;
             }
 
@@ -151,5 +159,34 @@ class UserResource extends JsonResource
             'last_modified_at' => $orderStatus->last_modified_at,
             'rejection_reason' => $orderStatus->rejection_reason,
         ];
+    }
+
+    /**
+     * Get min/max capacity and price if the user is a hall.
+     */
+    private function getModelsInfo()
+    {
+        // Check if the user role is 'halls' and userable is ServiceProvider
+        if ($this->role && $this->role->name_en === 'halls' && $this->userable_type === 'App\Models\ServiceProvider' && $this->userable) {
+            $rooms = $this->userable->rooms;
+            
+            if ($rooms->isNotEmpty()) {
+                return [
+                    'min_capacity' => $rooms->min('capacity'),
+                    'max_capacity' => $rooms->max('capacity'),
+                    'min_price' => $rooms->min('rent_price'),
+                    'max_price' => $rooms->max('rent_price'),
+                ];
+            } else {
+                // Return zeros if no rooms found
+                return [
+                    'min_capacity' => 0,
+                    'max_capacity' => 0,
+                    'min_price' => 0,
+                    'max_price' => 0,
+                ];
+            }
+        }
+        return null;
     }
 }

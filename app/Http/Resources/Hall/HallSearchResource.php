@@ -79,7 +79,7 @@ class HallSearchResource extends JsonResource
                 'description' => $locale === 'en' ? $matchingRoom->description_en : $matchingRoom->description,
                 'price' => $matchingRoom->rent_price,
                 'capacity' => $matchingRoom->capacity,
-                'image' => $matchingRoom->getFirstMediaUrl('images'),
+                'image' => $matchingRoom->getFirstMediaUrl('room_image'),
             ];
         }
 

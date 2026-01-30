@@ -42,7 +42,12 @@ class ServiceProviderController extends Controller
         $data=$request->validated();
         if($userId!=null && Auth::guard('owner')->check())
         {
-            $user=$this->userService->findUserById($userId);
+            try {
+                $user=$this->userService->findUserById($userId);
+            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+                return $this->handler->errorResponse(false, 'User not found', [], 404);
+            }
+
             if($user->role->name_en==='halls')
             {
                 $maxImages=2;
@@ -57,15 +62,18 @@ class ServiceProviderController extends Controller
         
         // للتأكد من استلام الصور بشكل صحيح
         
-        
-        $images = $this->handler->manageImagesOnModel(
-            $serviceProvider,
-            'service_provider_image',
-            $request->file('image'),
-            3,
-            $data['replace_all'] ?? false,
-            $data['image_id'] ?? null
-        );
+        try {
+            $images = $this->handler->manageImagesOnModel(
+                $serviceProvider,
+                'service_provider_image',
+                $request->file('image'),
+                3,
+                $data['replace_all'] ?? false,
+                $data['image_id'] ?? null
+            );
+        } catch (\Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), [], 400); 
+        }
         
         // تحديث حالة الصالة إلى under_review عند إضافة أو تعديل الصور
         $underReviewStatus = \App\Models\Status::where('name_en', 'under_review')->first();

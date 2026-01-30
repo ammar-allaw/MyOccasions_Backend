@@ -31,7 +31,7 @@ class AddServiceRequest extends FormRequest
                 'string',
                 // $this->uniqueRoomRule('name'),
             ],
-            'description' => 'nullable|string|min:10',
+            'description' => 'nullable|string|min:10|max:500',
 
             'name_en' => [
                 'required',
@@ -39,7 +39,7 @@ class AddServiceRequest extends FormRequest
                 // $this->uniqueRoomRule('name_en'),
 
             ],
-            'description_en' => 'nullable|string|min:10',
+            'description_en' => 'nullable|string|min:10|max:500',
 
             'price' =>'required|integer|min:0',
             'room_id' => 'nullable|array',

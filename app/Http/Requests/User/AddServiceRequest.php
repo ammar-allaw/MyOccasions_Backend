@@ -23,7 +23,7 @@ class AddServiceRequest extends FormRequest
     {
         return [
             'name'=>'required|string',
-            'description'=>'nullable|string|min:10',
+            'description'=>'nullable|string|min:10|max:500',
             'name_ar'=>'required|string',
             'description_ar'=>'nullable|string|min:10',
             'price'=>'required|integer|min:0',

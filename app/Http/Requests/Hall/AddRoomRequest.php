@@ -30,7 +30,7 @@ class AddRoomRequest extends FormRequest
                 'string',
                 $this->uniqueRoomRule('name'),
             ],
-            'description' => 'nullable|string|min:10',
+            'description' => 'nullable|string|min:10|max:500',
 
             'name_en' => [
                 'required',
@@ -38,7 +38,7 @@ class AddRoomRequest extends FormRequest
                 $this->uniqueRoomRule('name_en'),
 
             ],
-            'description_en' => 'nullable|string|min:10',
+            'description_en' => 'nullable|string|min:10|max:500',
 
             'rent_price' => 'required|integer|min:0',
             'image.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', 

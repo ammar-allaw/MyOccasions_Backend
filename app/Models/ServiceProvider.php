@@ -41,4 +41,14 @@ class ServiceProvider extends Model implements HasMedia
         return $this->morphOne(OrderStatus::class, 'orderable');
     }
 
+    public function government()
+    {
+        return $this->belongsTo(Government::class);
+    }
+
+    public function region()
+    {
+        return $this->belongsTo(Region::class);
+    }
+
 }

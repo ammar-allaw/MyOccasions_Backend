@@ -18,6 +18,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
+use function Laravel\Prompts\error;
+
 class AuthController extends Controller
 {
  
@@ -81,12 +83,11 @@ class AuthController extends Controller
 
                     200,);
             }else{
-                $e=new AuthenticationException ();
                 return $this->handler->errorResponse(
-                    false,
-                    $e->getMessage(),
-                    null
-                ,401);
+                false,
+                'بيانات تسجيل الدخول غير صحيحة  ',
+                null
+            ,422); ;
             }
         }catch(Exception $e){
             return $this->handler->errorResponse(
