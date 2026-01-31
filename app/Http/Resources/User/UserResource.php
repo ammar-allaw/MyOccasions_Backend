@@ -176,6 +176,7 @@ class UserResource extends JsonResource
                     'max_capacity' => $rooms->max('capacity'),
                     'min_price' => $rooms->min('rent_price'),
                     'max_price' => $rooms->max('rent_price'),
+                    'count_rooms' => $rooms->count(),
                 ];
             } else {
                 // Return zeros if no rooms found
@@ -184,6 +185,7 @@ class UserResource extends JsonResource
                     'max_capacity' => 0,
                     'min_price' => 0,
                     'max_price' => 0,
+                    'count_rooms' => 0,
                 ];
             }
         }

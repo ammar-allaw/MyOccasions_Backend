@@ -74,7 +74,7 @@ class AuthController extends Controller
                 $user->load('role');
                 $role_name=$user->role->name_en;
                 $dive_name = $request->post('dive_name',$request->userAgent('sanctum.expiration'));
-                $userToken=$user->createToken($dive_name);
+                $userToken=$user->createToken($dive_name, ['*'], now()->addDays(7));
                 return $this->handler->successResponse(
                     true,
                     'success login',
@@ -108,7 +108,7 @@ class AuthController extends Controller
                 $owner->load('role');
                 $role_name=$owner->role->name_en;
                 $dive_name = $request->post('dive_name',$request->userAgent('sanctum.expiration'));
-                $userToken=$owner->createToken($dive_name);
+                $userToken=$owner->createToken($dive_name,['*'], now()->addDays(1));
                 return $this->handler->successResponse(
                     true,
                     'success owner login',
@@ -223,6 +223,27 @@ class AuthController extends Controller
             return $this->handler->successResponse(
                 true,
                 'success change password',
+                null,
+                200,); 
+        }catch(Exception $e){
+            return $this->handler->errorResponse(
+                false,
+                $e->getMessage(),
+                null
+            ,400);
+        }
+    }
+
+    public function logout(Request $request)
+    {
+        try{
+            $user=$request->user();
+            // حذف التوكن الحالي فقط
+            $user->currentAccessToken()->delete();
+            $user->tokens()->where('expires_at','<',now())->delete();
+            return $this->handler->successResponse(
+                true,
+                'success logout',
                 null,
                 200,); 
         }catch(Exception $e){
