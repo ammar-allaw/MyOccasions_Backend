@@ -125,6 +125,7 @@ class OwnerController extends Controller
 
         $collection = $collection->sortByDesc('id');
 
+        
         // تحويل الـ Collection إلى Paginator يدويًا
         $perPage = request()->get('per_page', 10);
         $page = request()->get('page', 1);
