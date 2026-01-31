@@ -83,6 +83,7 @@ class HallSearchResource extends JsonResource
             ];
         }
 
+        
         return [
             'id' => $user->id,
             'hall_name' => $hallName,
