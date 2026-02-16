@@ -562,6 +562,7 @@ class HallController extends Controller
                                 );
                             }
 
+                            
                             // Update/Set YouTube Link
                             $service->clearMediaCollection('service_link_youtube');
                             $service->media()->create([
