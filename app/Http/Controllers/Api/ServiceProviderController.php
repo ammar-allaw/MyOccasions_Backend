@@ -67,7 +67,7 @@ class ServiceProviderController extends Controller
                 $serviceProvider,
                 'service_provider_image',
                 $request->file('image'),
-                3,
+                $maxImages,
                 $data['replace_all'] ?? false,
                 $data['image_id'] ?? null
             );

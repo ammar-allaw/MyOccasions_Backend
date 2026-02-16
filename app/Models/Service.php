@@ -22,6 +22,19 @@ class Service extends Model implements HasMedia
 
     public $timestamps = false;
 
+    // public function registerMediaCollections(): void
+    // {
+    //     // 1. الصورة اللي بتظهر برا كغلاف للخدمة
+    //     $this->addMediaCollection('main_image')
+    //         ->singleFile();
+
+    //     // 2. معرض الصور (Portfolio) - للمصورين يعرضوا لقطاتهم، وللمنسقين صور حفلات سابقة
+    //     $this->addMediaCollection('gallery');
+
+    //     // 3. فيديو ترويجي (اختياري)
+    //     $this->addMediaCollection('promo_video')
+    //         ->singleFile();
+    // }
 
     public function serviceable()
     {

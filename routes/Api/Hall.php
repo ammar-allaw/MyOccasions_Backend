@@ -17,13 +17,19 @@ Route::controller(HallController::class)->prefix('hall')
         ->middleware(['auth.provider.or.owner:halls']);
         //for service 
         Route::post('/add-service/{serviceProviderId?}','addService')->name('add-service')
-        ->middleware(['auth.provider.or.owner:halls']);
+        // ->middleware(['auth.provider.or.owner:halls']);
+        ->middleware(['auth.provider.or.owner']);
+
         Route::get('/get-details-of-hall/{hallId?}','getDetailsOfHall')->name('get-details-of-hall')
         ->middleware(['auth.api.or.owner']);
         Route::post('/update-service/{serviceId}','updateService')->name('update-service')
-        ->middleware(['auth.provider.or.owner:halls']);
+        // ->middleware(['auth.provider.or.owner:halls']);
+        ->middleware(['auth.provider.or.owner']);
+
         Route::delete('/delete-service/{serviceId}','deleteService')->name('delete-service')
-        ->middleware(['auth.provider.or.owner:halls']);
+        ->middleware(['auth.provider.or.owner']);
+        // ->middleware(['auth.provider.or.owner:halls']);
+
         Route::delete('/delete-room/{roomId}','deleteRoom')->name('delete-room')
         ->middleware(['auth.provider.or.owner:halls']);
 });

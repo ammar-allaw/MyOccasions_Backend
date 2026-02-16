@@ -356,50 +356,44 @@ class HallController extends Controller
         try {
             $data = $request->validated();
             $isOwner = Auth::guard('owner')->check();
-            
             // إذا كان owner وبعت serviceProviderId
-            if ($isOwner && $serviceProviderId) {
-                $user = $this->userService->findUserById($serviceProviderId);
-                
-                // التأكد من أن المستخدم هو hall
-                if ($user->role->name_en !== 'halls') {
+            if ($isOwner) {
+                if(!$serviceProviderId) {
                     return $this->handler->errorResponse(
                         false,
-                        'The specified user is not a hall',
+                        'Service provider ID is required',
                         null,
                         400
                     );
                 }
+                $user = $this->userService->findUserById($serviceProviderId);
                 
-                $hall = $user->userable;
+                $serviceProvider = $user->userable;
             } else {
                 // إذا كان hall مصادق عليه
-                $authUser = $this->authService->authUser();
-                $hall = $this->authService->userable($authUser);
+                $user = $this->authService->authUser();
+                if(!$user->is_provider=true)
+                {
+                    return $this->handler->errorResponse(
+                        false,
+                        'Only service providers can add services',
+                        null,
+                        403
+                    );
+                }
+                $serviceProvider = $this->authService->userable($user);
             }
 
-          $services = $this->serviceProviderService->addService($data,$hall);
-          
-          // إضافة حالة under_review للـ service الجديد
-          $underReviewStatus = \App\Models\Status::where('name_en', 'under_review')->first();
-          if ($underReviewStatus) {
-              \App\Models\OrderStatus::create([
-                  'orderable_id' => $services->id,
-                  'orderable_type' => get_class($services),
-                  'status_id' => $underReviewStatus->id,
-                  'change_description' => null,
-                  'last_modified_at' => null,
-              ]);
-          }
+          $services = $this->serviceProviderService->addService($data,$serviceProvider);
           
           $services->load('orderStatusAble');
 
         //   $services = is_array($services) ? $services : [$services];
             // dd($services);
             // foreach ($services as $service) {
+                // 1. الصورة الرسمية للخدمة (Cover Image) - صورة واحدة للجميع
                 $currentImageCount = $services->getMedia('service_image')->count();
                 $maxAllowedImages = 1;
-
                 $this->handler->attachImagesToModel(
                     $services,
                     $request->file('image'),
@@ -407,6 +401,52 @@ class HallController extends Controller
                     $currentImageCount,
                     $maxAllowedImages
                 );
+
+                // 2. منطق خاص للمصورين ومنسقي الحفلات (Gallery OR Promo Video)
+                // الاعتماد على Role الخاص بالمستخدم
+                $userRole = $user->role->name_en ?? '';
+                
+                $acceptedRoles = ['photographers', 'banquet coordinator', 'coordinator', 'planner', 'owner'];
+                
+                $isVisualProvider = false;
+                foreach ($acceptedRoles as $role) {
+                    if (str_contains($userRole, $role)) {
+                        $isVisualProvider = true;
+                        break;
+                    }
+                }
+
+                if ($isVisualProvider || $isOwner) {
+                    // 1. YouTube Link (youtube_link)
+                    if ($request->filled('youtube_link')) {
+                        // Create youtube link in media
+                        $services->media()->create([
+                            'collection_name' => 'service_link_youtube',
+                            'name' => 'youtube_link',
+                            'file_name' => 'youtube_link', 
+                            'disk' => 'public', 
+                            'size' => 0,
+                            'manipulations' => [],
+                            'custom_properties' => [],
+                            'generated_conversions' => [],
+                            'responsive_images' => [],
+                            'mime_type' => 'text/url',
+                            'youtube_link' => $request->youtube_link
+                        ]);
+                    }
+                    // 2. Gallery (gallery)
+                    elseif ($request->hasFile('gallery')) {
+                        $currentGalleryCount = $services->getMedia('gallery')->count();
+                        $this->handler->attachImagesToModel(
+                            $services,
+                            $request->file('gallery'),
+                            'gallery',
+                            $currentGalleryCount,
+                            8 
+                        );
+                    }
+                }
+          
                 $services->refresh();
             // }
 
@@ -465,7 +505,6 @@ class HallController extends Controller
                 $service = $this->serviceProviderService->findService($serviceId);
                 $service->load(['serviceable', 'media']);
                 $this->serviceProviderService->checkServiceable($service, $hall);
-                
                 // تتبع التغييرات للـ hall فقط
                 $originalService = $this->getOriginalModel(Service::class, $serviceId);
                 $this->trackChangesAndUpdateStatus($originalService, $data, $request, [
@@ -479,7 +518,7 @@ class HallController extends Controller
             $this->serviceProviderService->updateService($data, $service);
             $service->refresh();
             
-            // إدارة الصور باستخدام manageImagesOnModel
+            // إدارة الصور باستخدام manageImagesOnModel للصور الأساسية (service_image)
             $this->handler->manageImagesOnModel(
                 $service,
                 'service_image',
@@ -488,8 +527,85 @@ class HallController extends Controller
                 $data['replace_all'] ?? false,
                 $data['image_id'] ?? null
             );
+
+            // --- تحديث: ميزات خاصة للمصورين ومنسقي الحفلات ---
+            $serviceProvider = $service->serviceable;
+            if ($serviceProvider instanceof \App\Models\ServiceProvider) {
+                // الاعتماد على Role للمستخدم المرتبط بمزود الخدمة
+                $providerUser = $serviceProvider->user;
+                if ($providerUser) {
+                    $userRole = $providerUser->role->name_en ?? '';
+                    $acceptedRoles = ['photographers', 'banquet coordinator', 'coordinator', 'planner', 'owner'];
+                    
+                    $isVisualProvider = false;
+                    foreach ($acceptedRoles as $role) {
+                        if (str_contains($userRole, $role)) {
+                            $isVisualProvider = true;
+                            break;
+                        }
+                    }
+
+                    if ($isVisualProvider || $isOwner) {
+                        // Check existing media types
+                        $hasGallery = $service->getMedia('gallery')->count() > 0;
+                        $hasYoutubeLink = $service->getMedia('service_link_youtube')->count() > 0;
+
+                        // 1. YouTube Link Request
+                        if ($request->filled('youtube_link')) {
+                            // Cannot add youtube link if gallery exists
+                            if ($hasGallery) {
+                                return $this->handler->errorResponse(
+                                    false,
+                                    'Cannot add YouTube link because this service has a gallery. Please delete gallery images first.',
+                                    null,
+                                    400
+                                );
+                            }
+
+                            // Update/Set YouTube Link
+                            $service->clearMediaCollection('service_link_youtube');
+                            $service->media()->create([
+                                'collection_name' => 'service_link_youtube',
+                                'name' => 'youtube_link',
+                                'file_name' => 'youtube_link', 
+                                'disk' => 'public', 
+                                'size' => 0,
+                                'manipulations' => [],
+                                'custom_properties' => [],
+                                'generated_conversions' => [],
+                                'responsive_images' => [],
+                                'mime_type' => 'text/url',
+                                'youtube_link' => $request->youtube_link
+                            ]);
+                        }
+                        // 2. Gallery Request (Add/Edit/Delete)
+                        elseif ($request->hasFile('gallery') || $request->input('deleted_gallery_ids')) {
+                            // Cannot manage gallery if youtube link exists
+                            if ($hasYoutubeLink) {
+                                return $this->handler->errorResponse(
+                                    false,
+                                    'Cannot add or edit gallery because this service has a YouTube link. Please remove the YouTube link first.',
+                                    null,
+                                    400
+                                );
+                            }
+
+                            $this->handler->manageImagesOnModel(
+                                $service,
+                                'gallery',
+                                $request->file('gallery'),
+                                8, // الحد الأقصى 8 صور
+                                $request->boolean('replace_all_gallery'),
+                                $request->input('deleted_gallery_ids') // مصفوفة الـ IDs المراد حذفها
+                            );
+                        }
+                    }
+                }
+            }
+            // ----------------------------------------------------
+
             $service->refresh();
-            $service->load('orderStatusAble.status');
+            $service->load(['orderStatusAble.status', 'media']);
 
             return $this->handler->successResponse(
                 true,

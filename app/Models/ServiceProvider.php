@@ -46,6 +46,11 @@ class ServiceProvider extends Model implements HasMedia
         return $this->belongsTo(Government::class);
     }
 
+    public function types()
+    {
+        return $this->belongsToMany(Type::class, 'service_provider_types');
+    }
+
     public function region()
     {
         return $this->belongsTo(Region::class);

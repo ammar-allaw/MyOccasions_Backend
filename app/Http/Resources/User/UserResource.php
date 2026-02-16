@@ -35,6 +35,7 @@ class UserResource extends JsonResource
                 'role_name_en' => $this->role->name_en,
                 'userable_id' => $this->userable_id,
                 'userable_type' => $this->userable_type,
+
                 'userable' => $this->formatUserableForOwner($this->userable->makeHidden('media')),
                 'images' => $this->userable->getMedia('service_provider_image')->map(function ($media) {
                     return [
@@ -43,6 +44,13 @@ class UserResource extends JsonResource
                     ];
                 })->toArray(),
                 'order_status' => $this->getOrderStatus(),
+                'types' => $this->userable_type === 'App\Models\ServiceProvider' ? $this->userable->types->map(function ($type) {
+                    return [
+                        'id' => $type->id,
+                        'name' => $type->name, // English
+                        'name_en' => $type->name_en, // Arabic
+                    ];
+                }) : [],
             ];
         } else {
             // إذا لم يكن owner، نرجع حسب اللغة المطلوبة
@@ -81,6 +89,13 @@ class UserResource extends JsonResource
                 $data['userable']['region_name'] = $region 
                     ? ($locale === 'en' ? $region->name_en : $region->name) 
                     : null;
+
+                $data['types'] = $this->userable->types->map(function ($type) use ($locale) {
+                    return [
+                        'id' => $type->id,
+                        'name' => $locale === 'ar' ? $type->name : $type->name_en,
+                    ];
+                });
             }
 
             return $data;

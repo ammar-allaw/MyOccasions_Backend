@@ -54,6 +54,16 @@ class UserService implements UserServiceInterface
         //     return $user;
         // }
     }
+
+    public function getServiceProviderById($serviceProviderId)
+    {
+        $serviceProvider=$this->userRepo->getServiceProviderById($serviceProviderId);
+        if(!$serviceProvider)
+        {
+            throw new NotFoundHttpException('the service provider not found');
+        }
+        return $serviceProvider;
+    }
     
 
 
@@ -136,6 +146,11 @@ class UserService implements UserServiceInterface
     public function updateServiceProvider($serviceProvider, array $data)
     {
         return $this->userRepo->updateServiceProvider($serviceProvider, $data);
+    }
+
+    public function addTypesToServiceProvider($serviceProvider, $types)
+    {
+        return $this->userRepo->addTypesToServiceProvider($serviceProvider, $types);
     }
 
 }

@@ -14,6 +14,7 @@ use App\Services\Owner\OwnerService;
 use App\Services\ServiceProvider\ServiceProviderServiceInterface;
 use App\Services\User\UserServiceInterface;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -35,8 +36,11 @@ class OwnerController extends Controller
         $this->authService=$authService;
     }
 
+    //used 
+    //we used this function to add service provider by owner
     public function addServiceProvider(AddServiceProviderRequest $request)
     {
+        DB::beginTransaction();
         try{   
             $data=$request->validated();
             $serviceProvider=$this->serviceProviderService->createServiceProvider($data);
@@ -53,7 +57,13 @@ class OwnerController extends Controller
                     'last_modified_at' => null,
                 ]);
             }
+
+            if(isset($data['user_type']) && !empty($data['user_type'])){
+                $this->userService->addTypesToServiceProvider($serviceProvider, $data['user_type']);
+            }
             
+            DB::commit();
+
             $user->load('userable.orderStatusAble.status');
             
             return $this->handler->successResponse(
@@ -62,6 +72,7 @@ class OwnerController extends Controller
                 ['user'=>new UserResource($user)],
                 201,);
         }catch(Exception $e){
+            DB::rollBack();
             return $this->handler->errorResponse(
                 false,
                 $e->getMessage(),
@@ -70,7 +81,8 @@ class OwnerController extends Controller
         }
     }
 
-
+    //used 
+    //we use this function to get roles for owner to add service provider
     public function getRolesForOwner()
     {
         $roles=$this->ownerService->getRolesForOwner();
@@ -113,7 +125,8 @@ class OwnerController extends Controller
     //     );
     // }
 
-
+    //used
+    //we use this function to get service providers by role id for owner with pagination
     public function getServiceProvidersByRoleIdForOwner($roleId = null)
     {
         if ($roleId) {

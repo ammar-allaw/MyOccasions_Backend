@@ -14,11 +14,13 @@ interface UserRepositoryInterface
     public function deleteUser($id);
     public function getAllServiceProvider();
     public function findServiceProviderById($id);
+    public function getServiceProviderById($serviceProviderId); 
     public function softDeleteServiceProvider($id);
     public function getServiceProviderWithTrashed();
     public function findServiceProviderWithTrashedById($serviceProviderId);
     public function forceDeleteServiceProvider($serviceProvider);
     public function updateServiceProvider($serviceProvider, array $data);
     public function getUserByRoleIdForOwner($role);
+    public function addTypesToServiceProvider($serviceProvider, $types);
 
 }

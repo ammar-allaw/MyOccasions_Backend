@@ -35,7 +35,7 @@ class ServiceResource extends JsonResource
             
             if ($authUser->role) {
                 $roleName = $authUser->role->name_en ?? '';
-                $isOwnerOrHall = in_array($roleName, ['owner', 'halls']);
+                $isOwnerOrHall = in_array($roleName, ['owner', 'halls','photographers','aradas','banquet coordinators','singers']);
             }
         }
         
@@ -51,7 +51,28 @@ class ServiceResource extends JsonResource
                 'serviceable_type' => $this->serviceable_type,
                 'serviceable_id' => $this->serviceable_id,
                 'images' => $this->whenLoaded('media', function () {
-                    return GetImageUrlResource::collection($this->media);
+                    // Filter only 'service_image' collection
+                    $mainImages = $this->media->where('collection_name', 'service_image');
+                    return GetImageUrlResource::collection($mainImages);
+                }, []),
+                'gallery' => $this->whenLoaded('media', function () {
+                    $items = [];
+                    foreach ($this->media as $media) {
+                        if ($media->collection_name === 'service_link_youtube') {
+                            $items[] = [
+                                'id' => $media->id,
+                                'url' => $media->youtube_link,
+                                'type' => 'video'
+                            ];
+                        } elseif ($media->collection_name === 'gallery') {
+                            $items[] = [
+                                'id' => $media->id,
+                                'url' => url('storage/' . $media->id . '/' . $media->file_name),
+                                'type' => 'gallery'
+                            ];
+                        }
+                    }
+                    return $items;
                 }, []),
                 'order_status' => $this->whenLoaded('orderStatusAble', function () {
                     return $this->orderStatusAble ? [
@@ -76,7 +97,28 @@ class ServiceResource extends JsonResource
             'serviceable_type' => $this->serviceable_type,
             'serviceable_id' => $this->serviceable_id,
             'images' => $this->whenLoaded('media', function () {
-                return GetImageUrlResource::collection($this->media);
+                // Filter only 'service_image' collection
+                $mainImages = $this->media->where('collection_name', 'service_image');
+                return GetImageUrlResource::collection($mainImages);
+            }, []),
+            'gallery' => $this->whenLoaded('media', function () {
+                $items = [];
+                foreach ($this->media as $media) {
+                    if ($media->collection_name === 'service_link_youtube') {
+                        $items[] = [
+                            'id' => $media->id,
+                            'url' => $media->youtube_link,
+                            'type' => 'video'
+                        ];
+                    } elseif ($media->collection_name === 'gallery') {
+                        $items[] = [
+                            'id' => $media->id,
+                            'url' => url('storage/' . $media->id . '/' . $media->file_name),
+                            'type' => 'gallery'
+                        ];
+                    }
+                }
+                return $items;
             }, []),
         ];
     }

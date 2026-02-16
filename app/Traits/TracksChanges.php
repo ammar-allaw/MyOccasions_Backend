@@ -44,6 +44,17 @@ trait TracksChanges
             $changes[] = "استبدال جميع الصور";
         }
 
+        // تتبع التغييرات في المعرض واليوتيوب (للخدمات)
+        if ($request->hasFile('gallery')) {
+             $changes[] = "تحديث معرض الصور";
+        }
+        if ($request->filled('deleted_gallery_ids')) {
+             $changes[] = "حذف صور من المعرض";
+        }
+        if ($request->filled('youtube_link')) {
+             $changes[] = "تحديث رابط اليوتيوب";
+        }
+
         // إذا كان هناك تغييرات، نحدّث الـ status
         if (!empty($changes)) {
             $model->load('orderStatusAble');

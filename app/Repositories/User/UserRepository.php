@@ -13,6 +13,12 @@ class UserRepository implements UserRepositoryInterface
         return User::where('is_provider',1)->where('id',$id)->first();
     }
 
+    public function getServiceProviderById($serviceProviderId)
+    {
+        return ServiceProvider::where('id', $serviceProviderId)->first();
+    }
+
+
     public function softDeleteServiceProvider($serviceProvider)
     {
         return $serviceProvider->delete();
@@ -169,5 +175,10 @@ class UserRepository implements UserRepositoryInterface
         
         // إرجاع User object مع العلاقات
         return $serviceProvider->user->fresh(['role', 'userable.media']);
+    }
+
+    public function addTypesToServiceProvider($serviceProvider, $types)
+    {
+        return $serviceProvider->types()->syncWithoutDetaching($types);
     }
 }

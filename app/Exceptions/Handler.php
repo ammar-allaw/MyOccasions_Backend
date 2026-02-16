@@ -241,6 +241,7 @@ class Handler extends ExceptionHandler
                     }
 
                     $oldMedia->delete();
+                    $oldMedia->refresh(); // تحديث الحالة بعد الحذف
                 }
 
                 // التحقق من الحد الأقصى بعد الحذف

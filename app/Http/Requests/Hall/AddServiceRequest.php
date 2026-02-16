@@ -46,6 +46,9 @@ class AddServiceRequest extends FormRequest
             'room_id.*' => ['integer', new RoomBelongsToHall],
             'image' => 'required|array',
             'image.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'gallery' => 'required|array',
+            'gallery.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+
         ];
     }
 

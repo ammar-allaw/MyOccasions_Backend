@@ -27,6 +27,7 @@ $api_path='/Api';
 require __DIR__."{$api_path}/Auth.php";
 require __DIR__."{$api_path}/Owner.php";
 
+require __DIR__."{$api_path}/Service.php";
 
 
 require __DIR__."{$api_path}/Hall.php";

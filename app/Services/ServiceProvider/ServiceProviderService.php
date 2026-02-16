@@ -147,18 +147,17 @@ class ServiceProviderService implements ServiceProviderServiceInterface
         return $service;
     }
 
-    public function checkServiceable($service,$hall)
+    public function checkServiceable($service,$serviceProvider)
     {
         $type = $service->serviceable_type;
-        
         if ($type == 'App\Models\ServiceProvider') {
             // الخدمة تابعة للـ hall مباشرة
-            $serviceHall = $hall->services()->where('id', $service->id)->first();
+            $serviceHall = $serviceProvider->services()->where('id', $service->id)->first();
         } else {
             // الخدمة تابعة لـ room معين في الـ hall
             $serviceHall = \App\Models\Service::where('id', $service->id)
-                ->whereHasMorph('serviceable', [\App\Models\Room::class], function ($query) use ($hall) {
-                    $query->where('service_provider_id', $hall->id);
+                ->whereHasMorph('serviceable', [\App\Models\Room::class], function ($query) use ($serviceProvider) {
+                    $query->where('service_provider_id', $serviceProvider->id);
                 })
                 ->first();
         }
