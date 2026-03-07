@@ -11,6 +11,9 @@ Route::controller(ServiceProviderController::class)->prefix('service-provider')
         Route::post('/add-image-for-service-provider/{userId?}','addImageForServiceProvider')->name('/add-image-for-service-provider')
         ->middleware(['auth.provider.or.owner']);
 
+        Route::get('/get-details-of-service-provider/{userId?}','getServiceProviderDetails')->name('/get-details-of-service-provider')
+                ->middleware(['auth.provider.or.owner']);
+
         Route::put('/update-service-provider/{serviceProviderId?}','updateServiceProvider')->name('update-service-provider')
         ->middleware(['auth.provider.or.owner']);
 });

@@ -15,15 +15,21 @@ class UserResource extends JsonResource
     public function toArray(Request $request): array
     {
         // الحصول على المستخدم المصادق عليه
-        $authUser = auth()->user();
+        if(auth()->guard('owner')->check()) {
+            $authUser = auth()->guard('owner')->user();
+        } else {
+            $authUser = auth()->guard('api')->user();
+        }
         
         // الحصول على اللغة من الـ header
-        $locale = $request->header('Accept-Language', 'ar');
-        
-        // تحديد اللغة المستخدمة
-        // إذا كان المستخدم المصادق owner، نرجع عربي وإنجليزي
-        // إذا لم يكن owner، نرجع حسب الـ header
-        $isOwner = $authUser && $authUser->role && $authUser->role->name_en === 'owner';
+        $locale = $request->header('Accept-Language', 'ar');        
+        if ($authUser && $authUser->role && $authUser->role->name_en === 'owner') {
+            $isOwner = true;
+        } elseif ($authUser && $authUser->is_provider) {
+            $isOwner = true;
+        } else {
+            $isOwner = false;
+        }
         
         if ($isOwner) {
             // إذا كان owner، نرجع البيانات بالعربي والإنجليزي

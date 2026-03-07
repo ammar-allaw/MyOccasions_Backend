@@ -36,6 +36,39 @@ class ServiceProviderController extends Controller
         $this->userService=$userService;
     }
 
+    public function getServiceProviderDetails($userId=null)
+    {
+        try {
+
+            $user = $this->authService->authUser();
+            if($user && $user->is_provider==true) {
+                $user->load('userable');
+                $serviceProvider = $user->userable;
+            } else {
+                if(Auth::guard('owner')->check() && $userId != null) {
+                    $user = $this->userService->findUserById($userId);
+                    $user->load('userable');
+                    $serviceProvider = $user->userable;
+
+                } else {
+                    return $this->handler->errorResponse(false, 'Unauthorized', [], 401);
+                }
+            }
+            // $user = $this->userService->findUserById($userId);
+            // $serviceProvider = $this->serviceProviderService->findServiceProviderById($serviceProviderId);
+            // $user = $serviceProvider->user;
+            // $user->load('userable.orderStatusAble.status');
+            return $this->handler->successResponse(
+                true,
+                'success get service provider details',
+                ['serviceProvider' => new UserResource($user)],
+                200
+            );
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return $this->handler->errorResponse(false, 'Service provider not found', [], 404);
+        }
+    }
+
 
     public function addImageForServiceProvider(AddImageRequest $request,$userId=null)
     {
