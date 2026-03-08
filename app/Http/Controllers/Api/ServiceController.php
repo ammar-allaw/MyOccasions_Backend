@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Service\AddMainKeyRequest;
+use App\Http\Requests\Service\UpdateMainKeyRequest;
 use App\Http\Resources\Services\ServicesResource;
 use App\Services\Auth\AuthService;
 use App\Http\Resources\Hall\ServiceResource;
@@ -18,10 +21,12 @@ class ServiceController extends Controller
     private $authService;
     private $serviceService;
     private $serviceProviderService;
-    public function __construct(UserServiceInterface $userService,
+    private $handler;
+    public function __construct(Handler $handler,UserServiceInterface $userService,
     ServiceProviderServiceInterface $serviceProviderService,
     AuthService $authService, ServiceServiceInterface $serviceService)
     {
+        $this->handler = $handler;
         $this->userService = $userService;
         $this->authService=$authService;
         $this->serviceService=$serviceService;
@@ -118,6 +123,66 @@ class ServiceController extends Controller
             return new ServiceResource($service);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
+        }
+    }
+
+    public function addMainKey(AddMainKeyRequest $request)
+    {
+        try
+        {
+            $data=$request->validated();
+            $mainKey=$this->serviceService->addMainKey($data);
+            return $this->handler->successResponse(true,'Main Key added successfully',$mainKey);
+        }catch(\Exception $e){
+            $status = $e->getCode() ?: 400;
+            return $this->handler->errorResponse(false, $e->getMessage(), null, $status);
+        }
+    }
+
+    public function getMainKeys(Request $request)
+    {
+        try
+        {
+            $lang=$request->header('Accept-Language', 'ar');
+            $data=$request->all();
+            $data['lang']=$lang;
+            $mainKeys=$this->serviceService->getMainKeys($data);
+            return $this->handler->successResponse(true,'Main Keys retrieved successfully',$mainKeys);
+        }catch(\Exception $e){
+            // $status = $e->getCode() ?: 400;
+            if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
+                $status = $e->getStatusCode();
+            } else {
+                $status = $e->getCode() ?: 400;
+            }
+            return $this->handler->errorResponse(false, $e->getMessage(), null, $status);
+        }
+    }
+
+    public function updateMainKey(UpdateMainKeyRequest $request, $id)
+    {
+        try
+        {
+            $data=$request->validated();
+            $mainKey=$this->serviceService->findMainKeyById($id);
+            $updateMainKey=$this->serviceService->updateMainKey($data,$mainKey);
+            return $this->handler->successResponse(true,'Main Key updated successfully', $updateMainKey);
+        }catch(\Exception $e){
+            $status = $e->getCode() ?: 400;
+            return $this->handler->errorResponse(false, $e->getMessage(), null, $status);
+        }
+    }
+
+    public function deleteMainKey($id)
+    {
+        try
+        {
+            $mainKey=$this->serviceService->findMainKeyById($id);
+            $this->serviceService->deleteMainKey($mainKey);
+            return $this->handler->successResponse(true,'Main Key deleted successfully', null);
+        }catch(\Exception $e){
+            $status = $e->getCode() ?: 400;
+            return $this->handler->errorResponse(false, $e->getMessage(),null, $status);
         }
     }
 }

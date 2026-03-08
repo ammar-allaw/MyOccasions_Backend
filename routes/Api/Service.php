@@ -16,6 +16,16 @@ Route::controller(ServiceController::class)->prefix('service')
         Route::get('/get-details-of-service/{serviceId}','getDetailsOfService')
         ->name('get-details-of-service')
         ->middleware(['auth.api.or.owner']);
+
+        Route::post('/add-main-key','addMainKey')
+        ->name('add-main-key')->middleware(['auth:owner']);
+        Route::get('/get-main-keys','getMainKeys')
+        ->name('get-main-keys')->middleware(['auth.api.or.owner']);
+        Route::put('/update-main-key/{id}','updateMainKey')
+        ->name('update-main-key')->middleware(['auth:owner']);
+        Route::delete('/delete-main-key/{id}','deleteMainKey')
+        ->name('delete-main-key')->middleware(['auth:owner']);
+
 });
 
 
