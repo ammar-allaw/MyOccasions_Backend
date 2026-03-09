@@ -137,8 +137,7 @@ class Handler extends ExceptionHandler
                 'data' => $data,
             ], $statusCode);
         }
-    
-        
+
         
         public function errorResponse($success=false,$message = null,$data=null,$statusCode = 400)
         {
