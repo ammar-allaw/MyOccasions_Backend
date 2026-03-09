@@ -129,7 +129,7 @@ class Handler extends ExceptionHandler
         }
     
     
-        public function successResponse($success=true,$message = null, $data = null, $statusCode = 200)
+        public function successResponse($data ,$success=true,$message = null,  $statusCode = 200)
         {
             return response()->json([
                 'success' => $success,
