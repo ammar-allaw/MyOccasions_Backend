@@ -33,9 +33,9 @@ class AppController extends Controller
     {
         $roles=$this->authService->getRole();
         return $this->handler->successResponse(
+                    $roles,
                     true,
                     'success get roles',
-                    $roles, // <--- single resource, not collection
                     200);
 
     }
@@ -106,8 +106,6 @@ class AppController extends Controller
         }
 
         return $this->handler->successResponse(
-            true,
-            'success get serviceProviders',
             [
                 'serviceProviders' => $resourceClass::collection($paginated),
                 'pagination' => [
@@ -117,6 +115,8 @@ class AppController extends Controller
                     'total' => $paginated->total(),
                 ],
             ],
+            true,
+            'success get serviceProviders',
             200
         );
 

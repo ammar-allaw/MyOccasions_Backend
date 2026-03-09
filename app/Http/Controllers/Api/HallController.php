@@ -98,9 +98,9 @@ class HallController extends Controller
             DB::commit();
 
             return $this->handler->successResponse(
+                ['room' => new RoomResource($room)],
                 true,
                 'success add room',
-                ['room' => new RoomResource($room)],
                 201
             );
         } catch (Exception $e) {
@@ -122,9 +122,9 @@ class HallController extends Controller
         $hall=$this->authService->userable($user);
         $rooms=$this->serviceProviderService->getRoom($hall);
         return $this->handler->successResponse(
+                ['rooms' => RoomResource::collection($rooms)],
                 true,
                 'success add room',
-                ['rooms' => RoomResource::collection($rooms)],
                 200);
     }
 
@@ -196,9 +196,9 @@ class HallController extends Controller
             $room->load('orderStatusAble.status','media');
             
             return $this->handler->successResponse(
+                    ['room' => new RoomResource($room)],
                     true,
                     'success update room',
-                    ['room' => new RoomResource($room)],
                     201);
             
         }catch(Exception $e)
@@ -219,9 +219,9 @@ class HallController extends Controller
             $hall=$user->userable;
             $rooms=$this->serviceProviderService->getRoomsByHallId($hall);
             return $this->handler->successResponse(
+                        ['room' =>RoomResource::collection($rooms)],
                         true,
                         'success get rooms',
-                        ['room' =>RoomResource::collection($rooms)], // <--- single resource, not collection
                         201);
         }catch(Exception $e)
         {
@@ -343,9 +343,9 @@ class HallController extends Controller
         }
         
         return $this->handler->successResponse(
+            ['hall' => new ServiceProvideResource($hall)],
             true,
             'get details of hall',
-            ['hall' => new ServiceProvideResource($hall)],
             200
         );
     }
@@ -451,9 +451,9 @@ class HallController extends Controller
             // }
 
             return $this->handler->successResponse(
+                ['services' => new ServiceResource($services)],
                 true,
                 'success add service',
-                ['services' => new ServiceResource($services)],
                 201
             );
         } catch (\Exception $e) {
@@ -609,9 +609,9 @@ class HallController extends Controller
             $service->load(['orderStatusAble.status', 'media']);
 
             return $this->handler->successResponse(
+                ['service' => new ServiceResource($service)],
                 true,
                 'success update service',
-                ['service' => new ServiceResource($service)],
                 201
             );
         } catch (\Exception $e) {
@@ -634,9 +634,9 @@ class HallController extends Controller
             
             $this->serviceProviderService->deleteService($service);
             return $this->handler->successResponse(
+                null,
                 true,
                 'success delete service',
-                null,
                 200
             );
         } catch (\Exception $e) {
@@ -657,9 +657,9 @@ class HallController extends Controller
             $room->load(['media']);
             $this->serviceProviderService->deleteRoom($room);
             return $this->handler->successResponse(
+                null,
                 true,
                 'success delete room',
-                null,
                 200
             );
         } catch (\Exception $e) {

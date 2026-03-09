@@ -59,9 +59,9 @@ class ServiceProviderController extends Controller
             // $user = $serviceProvider->user;
             // $user->load('userable.orderStatusAble.status');
             return $this->handler->successResponse(
+                ['serviceProvider' => new UserResource($user)],
                 true,
                 'success get service provider details',
-                ['serviceProvider' => new UserResource($user)],
                 200
             );
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
@@ -130,10 +130,10 @@ class ServiceProviderController extends Controller
         }
         
         return $this->handler->successResponse(
+                    ['images'=>GetImageUrlResource::collection($images)],
                     true,
                     'success add image for service provider',
-                    ['images'=>GetImageUrlResource::collection($images)],
-                    201,);            
+                    201);            
 
     }
 
@@ -232,9 +232,9 @@ class ServiceProviderController extends Controller
         }
         
         return $this->handler->successResponse(
+            ['serviceProvider' => new UserResource($updatedUser)],
             true,
             'success update service provider',
-            ['serviceProvider' => new UserResource($updatedUser)],
             200
         );
     }

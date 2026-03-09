@@ -67,10 +67,10 @@ class OwnerController extends Controller
             $user->load('userable.orderStatusAble.status');
             
             return $this->handler->successResponse(
+                ['user'=>new UserResource($user)],
                 true,
                 'success add service provider',
-                ['user'=>new UserResource($user)],
-                201,);
+                201);
         }catch(Exception $e){
             DB::rollBack();
             return $this->handler->errorResponse(
@@ -87,9 +87,9 @@ class OwnerController extends Controller
     {
         $roles=$this->ownerService->getRolesForOwner();
         return $this->handler->successResponse(
+                ['roles'=>$roles],
                 true,
                 'success get roles service provider',
-                ['roles'=>$roles],
                 200);   
     }
 
@@ -152,8 +152,6 @@ class OwnerController extends Controller
         );
 
         return $this->handler->successResponse(
-            true,
-            'success get serviceProviders',
             [
                 'serviceProviders' => UserResource::collection($paginated),
                 'pagination' => [
@@ -163,6 +161,8 @@ class OwnerController extends Controller
                     'total' => $paginated->total(),
                 ],
             ],
+            true,
+            'success get serviceProviders',
             200
         );
     }
@@ -257,9 +257,9 @@ class OwnerController extends Controller
         $serviceProvider=$this->userService->findServiceProviderById($serviceProviderId);
         $serviceProvider=$this->userService->softDeleteServiceProvider($serviceProvider);
         return $this->handler->successResponse(
+                null,
                 true,
                 'success delete service provider',
-                null,
                 200);
     }
 
@@ -267,9 +267,9 @@ class OwnerController extends Controller
     {
         $serviceProviders=$this->userService->getServiceProviderWithTrashed();
         return $this->handler->successResponse(
+                ['service_providers'=>UserResource::collection($serviceProviders)],
                 true,
                 'success get service providers with trashed',
-                ['service_providers'=>UserResource::collection($serviceProviders)],
                 200);
     }
 
@@ -278,9 +278,9 @@ class OwnerController extends Controller
         $serviceProvider=$this->userService->findServiceProviderWithTrashedById($serviceProviderId);
         $this->userService->forceDeleteServiceProvider($serviceProvider);
         return $this->handler->successResponse(
+                null,
                 true,
                 'success force delete service provider',
-                null,
                 200);
     }
 }

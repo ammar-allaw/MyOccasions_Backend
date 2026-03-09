@@ -29,9 +29,9 @@ class GovernmentController extends Controller
     {
         $governments = $this->governmentService->getGovernments();
         return $this->handler->successResponse(
+                    $governments,
                     true,
                     'success get governments',
-                    $governments,
                     200);
     }
 
@@ -53,9 +53,9 @@ class GovernmentController extends Controller
             'name_en' => $data['name_en'],
         ]);
         return $this->handler->successResponse(
-            true,
-            'success add region',   
             $region,
+            true,   
+            'success add region',
             201
         );
     }
@@ -74,9 +74,9 @@ class GovernmentController extends Controller
         }
         $regions = $government->regions;
         return $this->handler->successResponse(
+            $regions,
             true,
             'success get regions by government',
-            $regions,
             200
         );
     }

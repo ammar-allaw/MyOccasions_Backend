@@ -46,10 +46,10 @@ class AuthController extends Controller
             $dive_name = $dataRequest->post('dive_name', $dataRequest->userAgent()) ?? 'web';
             $userToken = $user->createToken($dive_name);
             return $this->handler->successResponse(
+                ['user' => new UserResource($user), 'token' => $userToken->plainTextToken],
                 true,
                 'success registration user',
-                ['user' => new UserResource($user), 'token' => $userToken->plainTextToken],
-                200,);
+                200);
         }catch(Exception $e){
             return $this->handler->errorResponse(
                 false,
@@ -76,12 +76,10 @@ class AuthController extends Controller
                 $dive_name = $request->post('dive_name',$request->userAgent('sanctum.expiration'));
                 $userToken=$user->createToken($dive_name, ['*'], now()->addDays(7));
                 return $this->handler->successResponse(
+                    ['user'=>new UserResource($user),'token'=>$userToken->plainTextToken],
                     true,
                     'success login',
-                    // ['user'=>$user->makeHidden(['role']),'role_en'=>$role_name,'token'=>$userToken->plainTextToken],
-                    ['user'=>new UserResource($user),'token'=>$userToken->plainTextToken],
-
-                    200,);
+                    200);
             }else{
                 return $this->handler->errorResponse(
                 false,
@@ -110,10 +108,10 @@ class AuthController extends Controller
                 $dive_name = $request->post('dive_name',$request->userAgent('sanctum.expiration'));
                 $userToken=$owner->createToken($dive_name,['*'], now()->addDays(1));
                 return $this->handler->successResponse(
+                    ['owner'=>$owner->makeHidden(['role']),'role_en'=>$role_name,'token'=>$userToken->plainTextToken],
                     true,
                     'success owner login',
-                    ['owner'=>$owner->makeHidden(['role']),'role_en'=>$role_name,'token'=>$userToken->plainTextToken],
-                    200,);
+                    200);
             }else{
                 $e=new NotFoundHttpException ();
                 return $this->handler->errorResponse(

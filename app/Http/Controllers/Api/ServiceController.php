@@ -132,7 +132,7 @@ class ServiceController extends Controller
         {
             $data=$request->validated();
             $mainKey=$this->serviceService->addMainKey($data);
-            return $this->handler->successResponse(true,'Main Key added successfully',$mainKey);
+            return $this->handler->successResponse($mainKey, true, 'Main Key added successfully');
         }catch(\Exception $e){
             $status = $e->getCode() ?: 400;
             return $this->handler->errorResponse(false, $e->getMessage(), null, $status);
@@ -147,7 +147,7 @@ class ServiceController extends Controller
             $data=$request->all();
             $data['lang']=$lang;
             $mainKeys=$this->serviceService->getMainKeys($data);
-            return $this->handler->successResponse(true,'Main Keys retrieved successfully',$mainKeys);
+            return $this->handler->successResponse($mainKeys, true, 'Main Keys retrieved successfully');
         }catch(\Exception $e){
             // $status = $e->getCode() ?: 400;
             if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
@@ -166,7 +166,7 @@ class ServiceController extends Controller
             $data=$request->validated();
             $mainKey=$this->serviceService->findMainKeyById($id);
             $updateMainKey=$this->serviceService->updateMainKey($data,$mainKey);
-            return $this->handler->successResponse(true,'Main Key updated successfully', $updateMainKey);
+            return $this->handler->successResponse($updateMainKey, true, 'Main Key updated successfully');
         }catch(\Exception $e){
             $status = $e->getCode() ?: 400;
             return $this->handler->errorResponse(false, $e->getMessage(), null, $status);
@@ -179,7 +179,7 @@ class ServiceController extends Controller
         {
             $mainKey=$this->serviceService->findMainKeyById($id);
             $this->serviceService->deleteMainKey($mainKey);
-            return $this->handler->successResponse(true,'Main Key deleted successfully', null);
+            return $this->handler->successResponse(null, true, 'Main Key deleted successfully');
         }catch(\Exception $e){
             $status = $e->getCode() ?: 400;
             return $this->handler->errorResponse(false, $e->getMessage(),null, $status);
