@@ -16,4 +16,6 @@ interface ServiceServiceInterface
     public function updateMainKey($data, $mainKey);
 
     public function deleteMainKey($mainKey);
+
+    public function syncServiceMainKeys($service, array $mainKeyIds, $serviceProvider = null): void;
 }

@@ -57,6 +57,22 @@ class UserResource extends JsonResource
                         'name_en' => $type->name_en, // Arabic
                     ];
                 }) : [],
+                'user_permissions' => $this->whenLoaded('userPermissions', fn() =>
+                    $this->userPermissions->map(fn($p) => [
+                        'id'      => $p->id,
+                        'name'    => $p->name,
+                        'allowed' => (bool) $p->pivot->allowed,
+                    ])->values()
+                , []),
+                'role_permissions' => $this->whenLoaded('role', fn() =>
+                    ($this->role && $this->role->relationLoaded('permissions'))
+                        ? $this->role->permissions->map(fn($p) => [
+                            'id'      => $p->id,
+                            'name'    => $p->name,
+                            'allowed' => (bool) $p->pivot->allowed,
+                        ])->values()
+                        : []
+                , []),
             ];
         } else {
             // إذا لم يكن owner، نرجع حسب اللغة المطلوبة
@@ -102,6 +118,19 @@ class UserResource extends JsonResource
                         'name' => $locale === 'ar' ? $type->name : $type->name_en,
                     ];
                 });
+            }
+
+            // If authenticated user is a Client, return get-only user_permissions for this user
+            if ($authUser && $authUser->userable_type === \App\Models\Client::class) {
+                $data['user_permissions'] = $this->whenLoaded('userPermissions', fn() =>
+                    $this->userPermissions
+                        ->filter(fn($p) => str_starts_with($p->name, 'get'))
+                        ->map(fn($p) => [
+                            'id'      => $p->id,
+                            'name'    => $p->name,
+                            'allowed' => (bool) $p->pivot->allowed,
+                        ])->values()
+                , []);
             }
 
             return $data;

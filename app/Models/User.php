@@ -86,12 +86,46 @@ class User extends Authenticatable implements HasMedia
             $q->where('name', 'hall');
         });
     }
-
-    public function hasPermission($permissionName)
+//new added
+    // Additional roles assigned via user_roles pivot (owner-level overrides)
+    public function userRoles()
     {
-        if ($this->role->permissions()->where('name', $permissionName)->where('allowed', true)->exists()) {
-            return true;
+        return $this->belongsToMany(Role::class, 'user_roles')
+                    ->withPivot('allowed')
+                    ->withTimestamps();
+    }
+
+    // Direct permissions assigned via user_permissions pivot
+    public function userPermissions()
+    {
+        return $this->belongsToMany(Permission::class, 'user_permissions')
+                    ->withPivot('allowed')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Check if the user has a permission.
+     * Checks direct user_permissions first, then falls back to the user's single role permissions.
+     * Uses loadMissing to prevent N+1 queries.
+     */
+    public function hasPermission(string $permissionName): bool
+    {
+        $this->loadMissing(['userPermissions', 'role.permissions']);
+
+        if ($this->role) {
+            $rolePermission = $this->role->permissions->firstWhere('name', $permissionName);
+            if ($rolePermission !== null) {
+                return (bool) $rolePermission->pivot->allowed;
+            }
         }
+        
+        // 1. Direct user permission (highest priority)
+        $direct = $this->userPermissions()->where('name', $permissionName)->first();
+        if ($direct) {
+            return (bool) $direct->pivot->allowed;
+        }
+
+        
         return false;
     }
 
@@ -121,6 +155,4 @@ class User extends Authenticatable implements HasMedia
             $q->where('name', $roleName);
         });
     }
-
-
 }

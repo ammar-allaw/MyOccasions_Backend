@@ -14,4 +14,6 @@ interface ServiceRepositoryInterface
     public function updateMainKey($data, $mainKey);
 
     public function deleteMainKey($mainKey);
+
+    public function syncServiceMainKeys($service, array $mainKeyIds): void;
 }

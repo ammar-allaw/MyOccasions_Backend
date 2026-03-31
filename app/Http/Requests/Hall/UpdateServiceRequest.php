@@ -50,7 +50,9 @@ class UpdateServiceRequest extends FormRequest
             'image.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'status_id' => 'nullable|exists:statuses,id',
             'rejection_reason' => 'nullable|string|required_if:status_id,2',
-            'replace_all' => 'nullable|boolean'
+            'replace_all' => 'nullable|boolean',
+            'main_key_ids' => 'nullable|array',
+            'main_key_ids.*' => 'integer|exists:main_keys,id',
         ];
     }
 

@@ -15,6 +15,7 @@ class Kernel extends HttpKernel
      */
     protected $middleware = [
         // \App\Http\Middleware\TrustHosts::class,
+        \App\Http\Middleware\SecurityHeadersMiddleware::class,
         \App\Http\Middleware\TrustProxies::class,
         \Illuminate\Http\Middleware\HandleCors::class,
         \App\Http\Middleware\PreventRequestsDuringMaintenance::class,
@@ -67,5 +68,6 @@ class Kernel extends HttpKernel
         'check.auth.permissions.owner' => \App\Http\Middleware\CheckOwnerAndPermissionMiddleware::class,
         'auth.api.or.owner' => \App\Http\Middleware\AuthenticateApiOrOwner::class,
         'auth.provider.or.owner' => \App\Http\Middleware\AuthenticateProviderOrOwner::class,
+        'can.access' => \App\Http\Middleware\CanAccessMiddleware::class,
     ];
 }

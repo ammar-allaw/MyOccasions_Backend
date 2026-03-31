@@ -29,7 +29,7 @@ class ServicesResource extends JsonResource
         // Check if the authenticated user is the owner of this service or has 'owner' role
         if ($user) {
             // Check if user is the service provider who owns this service
-            if ($user->userable_type === $this->serviceable_type && $user->userable_id == $this->serviceable_id) {
+            if ($user->userable_type === $this->serviceable_type && $user->userable_id == $this->serviceable_id && $user->is_provider ==true) {
                 $isOwner = true;
             }
             // Check if user has 'owner' role (assuming 'owner' is the role name for admins/owners)

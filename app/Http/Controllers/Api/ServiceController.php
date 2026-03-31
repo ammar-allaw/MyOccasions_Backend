@@ -82,10 +82,10 @@ class ServiceController extends Controller
                 $services = $serviceProvider->services()
                     ->whereHas('orderStatusAble.status', function($query) {
                         $query->where('name_en', 'accepted');
-                    })->get();
+                    })->with(['media', 'mainKeys', 'orderStatusAble.status'])->get();
             }
             
-            return ServicesResource::collection($services);
+            return ServiceResource::collection($services);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
         }

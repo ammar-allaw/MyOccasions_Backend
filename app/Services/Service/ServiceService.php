@@ -98,4 +98,29 @@ class ServiceService implements ServiceServiceInterface
         $this->serviceRepo->deleteMainKey($mainKey);
     }
 
+    public function syncServiceMainKeys($service, array $mainKeyIds, $serviceProvider = null): void
+    {
+        if (!empty($mainKeyIds)) {
+            $existingCount = MainKey::whereIn('id', $mainKeyIds)->count();
+            if ($existingCount !== count($mainKeyIds)) {
+                throw new Exception('One or more main_key IDs are invalid.', 422);
+            }
+
+            if ($serviceProvider) {
+                $serviceProvider->loadMissing('user');
+                $userRoleId = $serviceProvider->user?->role_id;
+                if ($userRoleId) {
+                    $invalidCount = MainKey::whereIn('id', $mainKeyIds)
+                        ->where('role_id', '!=', $userRoleId)
+                        ->count();
+                    if ($invalidCount > 0) {
+                        throw new Exception('One or more main keys do not match the service provider role.', 422);
+                    }
+                }
+            }
+        }
+
+        $this->serviceRepo->syncServiceMainKeys($service, $mainKeyIds);
+    }
+
 }

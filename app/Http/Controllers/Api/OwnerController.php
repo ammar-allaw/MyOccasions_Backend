@@ -229,6 +229,50 @@ class OwnerController extends Controller
     // }
 
 
+    /**
+     * Get role_permissions and user_permissions for a user.
+     * - Owner: pass {userId} to get any user's permissions.
+     * - Service provider (auth:api): omit {userId} to get own permissions.
+     */
+    public function getUserPermissions($userId = null)
+    {
+        if ($userId !== null) {
+            $user = $this->userService->findUserById($userId);
+        } else {
+            $user = $this->authService->authUser();
+            if (!$user) {
+                return $this->handler->errorResponse(false, 'Unauthenticated', null, 401);
+            }
+        }
+
+        // Eager load to prevent N+1
+        $user->loadMissing(['userPermissions', 'role.permissions']);
+
+        $rolePermissions = $user->role
+            ? $user->role->permissions->map(fn($p) => [
+                'id'      => $p->id,
+                'name'    => $p->name,
+                'allowed' => (bool) $p->pivot->allowed,
+            ])->values()
+            : collect([]);
+
+        $userPermissions = $user->userPermissions->map(fn($p) => [
+            'id'      => $p->id,
+            'name'    => $p->name,
+            'allowed' => (bool) $p->pivot->allowed,
+        ])->values();
+
+        return $this->handler->successResponse(
+            [
+                'role_permissions' => $rolePermissions,
+                'user_permissions' => $userPermissions,
+            ],
+            true,
+            'success get user permissions',
+            200
+        );
+    }
+
     //not used now by ammar
     // public function getAllRoomsWithStatus()
     // {

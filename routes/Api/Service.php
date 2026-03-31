@@ -12,7 +12,8 @@ Route::controller(ServiceController::class)->prefix('service')
 ->group(function(){
         Route::get('/get-service-for-service-provider/{serviceProviderId?}','getServiceForServiceProvider')
         ->name('get-services-for-service-provider')
-        ->middleware(['auth.api.or.owner']);
+        // ->middleware(['auth.api.or.owner']);
+        ->middleware('can.access:true,true,get_services');
         Route::get('/get-details-of-service/{serviceId}','getDetailsOfService')
         ->name('get-details-of-service')
         ->middleware(['auth.api.or.owner']);

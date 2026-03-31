@@ -8,7 +8,7 @@ class ServiceRepository implements ServiceRepositoryInterface
 {
     public function getServicesForServiceProvider($serviceProvider = null)
     {
-        return $serviceProvider->services()->get();
+        return $serviceProvider->services()->with(['media', 'mainKeys', 'orderStatusAble.status'])->get();
     }
 
     public function addMainKey($data)
@@ -40,5 +40,10 @@ class ServiceRepository implements ServiceRepositoryInterface
     public function deleteMainKey($mainKey)
     {
         $mainKey->delete();
+    }
+
+    public function syncServiceMainKeys($service, array $mainKeyIds): void
+    {
+        $service->mainKeys()->sync($mainKeyIds);
     }
 }

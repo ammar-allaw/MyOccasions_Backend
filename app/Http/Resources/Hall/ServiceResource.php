@@ -85,6 +85,13 @@ class ServiceResource extends JsonResource
                         'rejection_reason' => $this->orderStatusAble->rejection_reason,
                     ] : null;
                 }),
+                'main_keys' => $this->whenLoaded('mainKeys', function () {
+                    return $this->mainKeys->map(fn($key) => [
+                        'id'     => $key->id,
+                        'key'    => $key->key,
+                        'key_en' => $key->key_en,
+                    ]);
+                }, []),
             ];
         }
         
@@ -119,6 +126,12 @@ class ServiceResource extends JsonResource
                     }
                 }
                 return $items;
+            }, []),
+            'main_keys' => $this->whenLoaded('mainKeys', function () use ($locale) {
+                return $this->mainKeys->map(fn($key) => [
+                    'id'  => $key->id,
+                    'key' => $locale === 'en' ? $key->key_en : $key->key,
+                ]);
             }, []),
         ];
     }

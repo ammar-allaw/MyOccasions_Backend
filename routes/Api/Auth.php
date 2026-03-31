@@ -14,4 +14,6 @@ Route::controller(AuthController::class)
         ->middleware('auth:owner');
         Route::post('/change-password','changePassword')->name('/change-password')
         ->middleware('auth:api');
+
+        
 });

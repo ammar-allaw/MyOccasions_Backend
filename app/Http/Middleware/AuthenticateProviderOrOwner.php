@@ -21,7 +21,6 @@ class AuthenticateProviderOrOwner
         if (Auth::guard('api')->check()) {
             $userAuth = Auth::guard('api')->id();
             $user = User::find($userAuth);
-            // dd($roleName);
             if(!$roleName == null)
             {
                 if ($user && $user->is_provider == true &&  $user->role->name_en === $roleName) 

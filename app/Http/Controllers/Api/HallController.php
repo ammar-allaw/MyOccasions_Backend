@@ -16,6 +16,7 @@ use App\Models\Room;
 use App\Models\Service;
 use App\Models\User;
 use App\Services\Auth\AuthService;
+use App\Services\Service\ServiceServiceInterface;
 use App\Services\ServiceProvider\ServiceProviderServiceInterface;
 use App\Services\User\UserServiceInterface;
 use App\Traits\TracksChanges;
@@ -31,13 +32,20 @@ class HallController extends Controller
     private $serviceProviderService;
     private $authService;
     private $userService;
-    public function __construct(Handler $handler,ServiceProviderServiceInterface $serviceProviderService
-    ,AuthService $authService
-    ,UserServiceInterface $userService){
-        $this->handler=$handler;
-        $this->serviceProviderService=$serviceProviderService;
-        $this->authService=$authService;
-        $this->userService=$userService;
+    private $serviceService;
+
+    public function __construct(
+        Handler $handler,
+        ServiceProviderServiceInterface $serviceProviderService,
+        AuthService $authService,
+        UserServiceInterface $userService,
+        ServiceServiceInterface $serviceService
+    ) {
+        $this->handler = $handler;
+        $this->serviceProviderService = $serviceProviderService;
+        $this->authService = $authService;
+        $this->userService = $userService;
+        $this->serviceService = $serviceService;
     }
     public function addRoom(AddRoomRequest $request, $serviceProviderId = null)
     {
@@ -48,17 +56,17 @@ class HallController extends Controller
             // إذا كان owner وبعت serviceProviderId
             if ($isOwner && $serviceProviderId) {
                 $user = $this->userService->findUserById($serviceProviderId);
-                
-                // التأكد من أن المستخدم هو hall
-                if ($user->role->name_en !== 'halls') {
-                    return $this->handler->errorResponse(
-                        false,
-                        'The specified user is not a hall',
-                        null,
-                        400
-                    );
-                }
-                
+                //added commit by ammar 
+                // // التأكد من أن المستخدم هو hall
+                // if ($user->role->name_en !== 'halls') {
+                //     return $this->handler->errorResponse(
+                //         false,
+                //         'The specified user is not a hall',
+                //         null,
+                //         403
+                //     );
+                // }
+                //ended by ammar 2026/03/28
                 $hall = $user->userable;
             } else {
                 // إذا كان hall مصادق عليه
@@ -83,7 +91,7 @@ class HallController extends Controller
             $room->load('orderStatusAble');
 
             $currentImageCount = $room->getMedia('room_image')->count();
-            $maxAllowedImages = 4;
+            $maxAllowedImages = 5;
 
             $this->handler->attachImagesToModel(
                 $room,
@@ -188,7 +196,7 @@ class HallController extends Controller
                 $room,
                 'room_image',
                 $request->file('image'),
-                4,
+                5,
                 $data['replace_all'] ?? false,
                 $data['image_id'] ?? null
             );
@@ -211,6 +219,7 @@ class HallController extends Controller
         }
     }
 
+    //not used now 
     public function getRoomsByHallId($hallId)
     {
         try{
@@ -450,6 +459,13 @@ class HallController extends Controller
                 $services->refresh();
             // }
 
+            // Sync main keys if provided
+            if (!empty($data['main_key_ids'])) {
+                $this->serviceService->syncServiceMainKeys($services, $data['main_key_ids'], $serviceProvider);
+            }
+
+            $services->load('mainKeys');
+
             return $this->handler->successResponse(
                 ['services' => new ServiceResource($services)],
                 true,
@@ -498,12 +514,15 @@ class HallController extends Controller
             // إذا كان owner، نبحث عن الـ service مباشرة
             if ($isOwner) {
                 $service = $this->serviceProviderService->findService($serviceId);
+                $service->load('serviceable');
+                $serviceProvider = $service->serviceable;
             } else {
                 // إذا كان hall، نتحقق من أن الـ service يخصه
                 $authUser = $this->authService->authUser();
                 $hall = $this->authService->userable($authUser);
                 $service = $this->serviceProviderService->findService($serviceId);
                 $service->load(['serviceable', 'media']);
+                $serviceProvider = $service->serviceable;
                 $this->serviceProviderService->checkServiceable($service, $hall);
                 // تتبع التغييرات للـ hall فقط
                 $originalService = $this->getOriginalModel(Service::class, $serviceId);
@@ -529,7 +548,6 @@ class HallController extends Controller
             );
 
             // --- تحديث: ميزات خاصة للمصورين ومنسقي الحفلات ---
-            $serviceProvider = $service->serviceable;
             if ($serviceProvider instanceof \App\Models\ServiceProvider) {
                 // الاعتماد على Role للمستخدم المرتبط بمزود الخدمة
                 $providerUser = $serviceProvider->user;
@@ -606,7 +624,13 @@ class HallController extends Controller
             // ----------------------------------------------------
 
             $service->refresh();
-            $service->load(['orderStatusAble.status', 'media']);
+            $service->load(['orderStatusAble.status', 'media', 'mainKeys']);
+
+            // Sync main keys if key is present in request (allows clearing with empty array)
+            if (array_key_exists('main_key_ids', $data)) {
+                $this->serviceService->syncServiceMainKeys($service, $data['main_key_ids'] ?? [], $serviceProvider);
+                $service->load('mainKeys');
+            }
 
             return $this->handler->successResponse(
                 ['service' => new ServiceResource($service)],
