@@ -90,6 +90,13 @@ class ServiceProviderController extends Controller
             }
         }else{
             $user=$this->authService->authUser();
+            if($user->role->name_en==='halls')
+            {
+                $maxImages=2;
+            }
+            else{
+                $maxImages=1;
+            }
         }
         $serviceProvider=$user->userable;
         
@@ -198,11 +205,18 @@ class ServiceProviderController extends Controller
         
         // إدارة الصور
         if ($request->hasFile('image') || isset($data['image_id'])) {
+            if($user->role->name_en==='halls')
+            {
+                $maxImages=2;
+            }
+            else{
+                $maxImages=1;
+            }
             $this->handler->manageImagesOnModel(
                 $serviceProvider,
                 'service_provider_image',
                 $request->file('image'),
-                3,
+                $maxImages,
                 $data['replace_all'] ?? false,
                 $data['image_id'] ?? null
             );
