@@ -41,7 +41,7 @@ class ServiceController extends Controller
             $serviceProvider = null;
 
             // Check if user is the service provider (owner of the services)
-            if($user &&$user->is_provider == true && $user->role->name_en != 'client' && $serviceProviderId == null)
+            if($user && $user->is_provider == true && $user->role->name_en != 'client')
             {
                 $serviceProvider = $user->userable;
                 $canViewAll = true;

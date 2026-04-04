@@ -44,12 +44,22 @@ class AppController extends Controller
 
     public function getServiceProvidersByRoleId($roleId)
     {
+        $user = auth()->user();
+        $role_name=$user->role->name_en;
+        if($role_name!='client')
+        {
+            return $this->handler->errorResponse(
+                    false,
+                    'Unauthorized',
+                    null,
+                    401
+                );
+        }
         $role = $this->authService->findRoleById($roleId);
 
         $filters = request()->all();
         
         // Default government filter for Client
-        $user = auth()->user();
         if ($user && $user->userable_type === Client::class && empty($filters['government_id'])) {
              $filters['government_id'] = $user->userable->government_id ?? null;
         }
@@ -87,7 +97,7 @@ class AppController extends Controller
         }
 
         $collection = $this->userService->getUserByRoleId($role, $filters);
-        // تحويل الـ Collection إلى Paginator يدويًا
+        $collection->loadMissing(['userPermissions', 'role.permissions']); // تحويل الـ Collection إلى Paginator يدويًا
         $perPage = request()->get('per_page', 10);
         $page = request()->get('page', 1);
         $offset = ($page - 1) * $perPage;

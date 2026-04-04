@@ -120,7 +120,7 @@ class UserResource extends JsonResource
                 });
             }
 
-            // If authenticated user is a Client, return get-only user_permissions for this user
+            // If authenticated user is a Client, return get-only permissions for this service provider
             if ($authUser && $authUser->userable_type === \App\Models\Client::class) {
                 $data['user_permissions'] = $this->whenLoaded('userPermissions', fn() =>
                     $this->userPermissions
@@ -130,6 +130,18 @@ class UserResource extends JsonResource
                             'name'    => $p->name,
                             'allowed' => (bool) $p->pivot->allowed,
                         ])->values()
+                , []);
+
+                $data['role_permissions'] = $this->whenLoaded('role', fn() =>
+                    ($this->role && $this->role->relationLoaded('permissions'))
+                        ? $this->role->permissions
+                            ->filter(fn($p) => str_starts_with($p->name, 'get'))
+                            ->map(fn($p) => [
+                                'id'      => $p->id,
+                                'name'    => $p->name,
+                                'allowed' => (bool) $p->pivot->allowed,
+                            ])->values()
+                        : []
                 , []);
             }
 

@@ -100,8 +100,8 @@ class UserService implements UserServiceInterface
 
     public function getUserByRoleId($role, $filters = [])
     {
-        $users=$this->userRepo->getUserByRoleId($role, $filters);
-        $users->load('userable');
+        $users = $this->userRepo->getUserByRoleId($role, $filters);
+        $users->load(['userable', 'userPermissions', 'role.permissions']);
         return $users;
     }
     public function getUserByRoleIdForOwner($role)
