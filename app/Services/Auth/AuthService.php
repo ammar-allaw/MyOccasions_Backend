@@ -55,7 +55,10 @@ class AuthService
 
     public function getRole()
     {
-        $roles = Role::where('name_en', '!=', 'owner')->where('name_en','!=','client')->get();
+        $roles = Role::with('mainKeys')
+            ->where('name_en', '!=', 'owner')
+            ->where('name_en', '!=', 'client')
+            ->get();
         return $roles;
     }
 }

@@ -31,6 +31,17 @@ class AppController extends Controller
 
     public function getRoles()
     {
+        $user = auth()->user();
+        $role_name=$user->role->name_en;
+        if($role_name!='client')
+        {
+            return $this->handler->errorResponse(
+                    false,
+                    'Unauthorized',
+                    null,
+                    401
+                );
+        }
         $roles=$this->authService->getRole();
         return $this->handler->successResponse(
                     $roles,

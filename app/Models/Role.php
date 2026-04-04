@@ -21,6 +21,10 @@ class Role extends Model
         return $this->belongsToMany(Permission::class,'role_permissions')->withPivot('allowed');
     }
 
+    public function mainKeys(){
+        return $this->hasMany(MainKey::class);
+    }
+
     public function checkRoleIfHasPermission($role,$permission_id){
         $role_has_permission=$role->permissions()->where('permission_id', $permission_id)->exists();
         if($role_has_permission){
