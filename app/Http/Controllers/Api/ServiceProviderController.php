@@ -84,6 +84,7 @@ class ServiceProviderController extends Controller
             if($user->role->name_en==='halls')
             {
                 $maxImages=3;
+                
             }
             else{
                 $maxImages=1;
