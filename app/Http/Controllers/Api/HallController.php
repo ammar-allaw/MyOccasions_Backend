@@ -415,7 +415,7 @@ class HallController extends Controller
                 // الاعتماد على Role الخاص بالمستخدم
                 $userRole = $user->role->name_en ?? '';
                 
-                $acceptedRoles = ['photographers', 'banquet coordinator', 'coordinator', 'planner', 'owner'];
+                $acceptedRoles = ['photographers','aradas', 'banquet coordinator', 'coordinator', 'planner', 'owner'];
                 
                 $isVisualProvider = false;
                 foreach ($acceptedRoles as $role) {
@@ -553,7 +553,7 @@ class HallController extends Controller
                 $providerUser = $serviceProvider->user;
                 if ($providerUser) {
                     $userRole = $providerUser->role->name_en ?? '';
-                    $acceptedRoles = ['photographers', 'banquet coordinator', 'coordinator', 'planner', 'owner'];
+                    $acceptedRoles = ['photographers','aradas', 'banquet coordinator', 'coordinator', 'planner', 'owner'];
                     
                     $isVisualProvider = false;
                     foreach ($acceptedRoles as $role) {
