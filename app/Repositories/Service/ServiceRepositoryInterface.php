@@ -4,6 +4,7 @@ namespace App\Repositories\Service;
 interface ServiceRepositoryInterface
 {
     public function getServicesForServiceProvider($serviceProvider = null);
+    public function getServicesByRoleAndMainKeyQuery($role, array $filters = []);
     
     public function addMainKey($data);
 

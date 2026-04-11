@@ -23,11 +23,27 @@ class ServiceService implements ServiceServiceInterface
     public function getServicesForServiceProvider($serviceProvider = null)
     {
         $services=$this->serviceRepo->getServicesForServiceProvider($serviceProvider);
-        // if(!$services)
-        // {
-        //     throw new Exception('the services not found');
-        // }
         return $services;
+    }
+
+    public function filterServicesByMainKey($role, array $filters = [])
+    {
+        if (!empty($filters['price'])) {
+            $price = $filters['price'];
+            $op = $filters['price_operator'] ?? 'less';
+            if ($op === 'more') {
+                $filters['service_min_price'] = $price;
+            } else {
+                $filters['service_max_price'] = $price;
+            }
+        }
+
+        $query = $this->serviceRepo->getServicesByRoleAndMainKeyQuery($role, $filters);
+
+        $perPage = $filters['per_page'] ?? 10;
+        $page = $filters['page'] ?? 1;
+
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
     public function addMainKey($data)

@@ -135,6 +135,25 @@ class UserRepository implements UserRepositoryInterface
                     });
                 }
 
+                // Service Filters: Main key and service price
+                // if (!empty($filters['main_key_id']) || isset($filters['service_min_price']) || isset($filters['service_max_price'])) {
+                //     $query->whereHas('services', function($serviceQ) use ($filters) {
+                //         if (!empty($filters['main_key_id'])) {
+                //             $serviceQ->whereHas('mainKeys', function($mainKeyQ) use ($filters) {
+                //                 $mainKeyQ->where('main_keys.id', $filters['main_key_id']);
+                //             });
+                //         }
+
+                //         if (isset($filters['service_min_price'])) {
+                //             $serviceQ->where('price', '>=', $filters['service_min_price']);
+                //         }
+
+                //         if (isset($filters['service_max_price'])) {
+                //             $serviceQ->where('price', '<=', $filters['service_max_price']);
+                //         }
+                //     });
+                // }
+
                 $query->whereHas('orderStatusAble', function($statusQuery) {
                     $statusQuery->whereHas('status', function($innerQuery) {
                         $innerQuery->where('name_en', 'accepted');
