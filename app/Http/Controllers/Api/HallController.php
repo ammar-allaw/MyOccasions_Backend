@@ -187,7 +187,8 @@ class HallController extends Controller
                     'capacity' => 'السعة',
                 ]);
             }
-            
+
+            DB::beginTransaction();
             $this->serviceProviderService->updateRoom($data,$room);
             $room->refresh();
             
@@ -203,6 +204,7 @@ class HallController extends Controller
             $room->refresh();
             $room->load('orderStatusAble.status','media');
             
+            DB::commit();
             return $this->handler->successResponse(
                     ['room' => new RoomResource($room)],
                     true,
@@ -211,6 +213,7 @@ class HallController extends Controller
             
         }catch(Exception $e)
         {
+            DB::rollBack();
             return $this->handler->errorResponse(
                 false,
                 $e->getMessage(),
@@ -393,9 +396,11 @@ class HallController extends Controller
                 $serviceProvider = $this->authService->userable($user);
             }
 
-          $services = $this->serviceProviderService->addService($data,$serviceProvider);
-          
-          $services->load('orderStatusAble');
+            DB::beginTransaction();
+
+            $services = $this->serviceProviderService->addService($data,$serviceProvider);
+            
+            $services->load('orderStatusAble');
 
         //   $services = is_array($services) ? $services : [$services];
             // dd($services);
@@ -466,6 +471,7 @@ class HallController extends Controller
 
             $services->load('mainKeys');
 
+            DB::commit();
             return $this->handler->successResponse(
                 ['services' => new ServiceResource($services)],
                 true,
@@ -473,6 +479,7 @@ class HallController extends Controller
                 201
             );
         } catch (\Exception $e) {
+            DB::rollBack();
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
     }
@@ -533,7 +540,8 @@ class HallController extends Controller
                     'description_en' => 'الوصف الإنجليزي',
                 ]);
             }
-            
+
+            DB::beginTransaction();
             $this->serviceProviderService->updateService($data, $service);
             $service->refresh();
             
@@ -572,6 +580,7 @@ class HallController extends Controller
                         if ($request->filled('youtube_link')) {
                             // Cannot add youtube link if gallery exists
                             if ($hasGallery) {
+                                DB::rollBack();
                                 return $this->handler->errorResponse(
                                     false,
                                     'Cannot add YouTube link because this service has a gallery. Please delete gallery images first.',
@@ -601,6 +610,7 @@ class HallController extends Controller
                         elseif ($request->hasFile('gallery') || $request->input('deleted_gallery_ids')) {
                             // Cannot manage gallery if youtube link exists
                             if ($hasYoutubeLink) {
+                                DB::rollBack();
                                 return $this->handler->errorResponse(
                                     false,
                                     'Cannot add or edit gallery because this service has a YouTube link. Please remove the YouTube link first.',
@@ -632,6 +642,7 @@ class HallController extends Controller
                 $service->load('mainKeys');
             }
 
+            DB::commit();
             return $this->handler->successResponse(
                 ['service' => new ServiceResource($service)],
                 true,
@@ -639,6 +650,7 @@ class HallController extends Controller
                 201
             );
         } catch (\Exception $e) {
+            DB::rollBack();
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
     }
@@ -655,8 +667,10 @@ class HallController extends Controller
                 $service->load(['serviceable', 'media']);
                 $this->serviceProviderService->checkServiceable($service, $hall);
             }
-            
+
+            DB::beginTransaction();
             $this->serviceProviderService->deleteService($service);
+            DB::commit();
             return $this->handler->successResponse(
                 null,
                 true,
@@ -664,6 +678,7 @@ class HallController extends Controller
                 200
             );
         } catch (\Exception $e) {
+            DB::rollBack();
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
     }
@@ -679,7 +694,10 @@ class HallController extends Controller
                 $room = $this->serviceProviderService->findRoomForHall($hall, $roomId);
             }
             $room->load(['media']);
+
+            DB::beginTransaction();
             $this->serviceProviderService->deleteRoom($room);
+            DB::commit();
             return $this->handler->successResponse(
                 null,
                 true,
@@ -687,6 +705,7 @@ class HallController extends Controller
                 200
             );
         } catch (\Exception $e) {
+            DB::rollBack();
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
     }

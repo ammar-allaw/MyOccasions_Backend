@@ -6,6 +6,7 @@ use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Hall\HallSearchResource;
 use App\Http\Resources\Hall\ServiceResource;
+use App\Http\Resources\Services\SearchServiceResource;
 use App\Http\Resources\User\UserResource;
 use App\Models\Client;
 use App\Services\Auth\AuthService;
@@ -115,7 +116,7 @@ class AppController extends Controller
 
             return $this->handler->successResponse(
                 [
-                    'services' => ServiceResource::collection($paginator),
+                    'services' => SearchServiceResource::collection($paginator),
                     'pagination' => [
                         'current_page' => $paginator->currentPage(),
                         'last_page' => $paginator->lastPage(),

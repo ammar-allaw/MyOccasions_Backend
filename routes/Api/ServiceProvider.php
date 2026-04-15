@@ -12,7 +12,8 @@ Route::controller(ServiceProviderController::class)->prefix('service-provider')
         ->middleware(['auth.provider.or.owner']);
 
         Route::get('/get-details-of-service-provider/{userId?}','getServiceProviderDetails')->name('/get-details-of-service-provider')
-                ->middleware(['auth.provider.or.owner']);
+                // ->middleware(['auth.provider.or.owner']);
+        ->middleware(['auth.api.or.owner']);
 
         Route::put('/update-service-provider/{serviceProviderId?}','updateServiceProvider')->name('update-service-provider')
         ->middleware(['auth.provider.or.owner']);
