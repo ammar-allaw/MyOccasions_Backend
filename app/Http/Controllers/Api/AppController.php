@@ -78,6 +78,10 @@ class AppController extends Controller
         $role = $this->authService->findRoleById($roleId);
 
         $filters = request()->all();
+
+        $perPage = (int) request()->integer('per_page', 10);
+        $perPage = max(1, min(100, $perPage));
+        $filters['per_page'] = $perPage;
         
         // Default government filter for Client
         if ($user && $user->userable_type === Client::class && empty($filters['government_id'])) {
@@ -132,8 +136,8 @@ class AppController extends Controller
 
         $collection = $this->userService->getUserByRoleId($role, $filters);
         $collection->loadMissing(['userPermissions', 'role.permissions']); // تحويل الـ Collection إلى Paginator يدويًا
-        $perPage = request()->get('per_page', 10);
-        $page = request()->get('page', 1);
+        $page = (int) request()->integer('page', 1);
+        $page = max(1, $page);
         $offset = ($page - 1) * $perPage;
         $paginated = new LengthAwarePaginator(
             $collection->slice($offset, $perPage)->values(),
