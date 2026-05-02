@@ -33,5 +33,6 @@ require __DIR__."{$api_path}/Service.php";
 require __DIR__."{$api_path}/Hall.php";
 require __DIR__."{$api_path}/App.php";
 require __DIR__."{$api_path}/ServiceProvider.php";
+require __DIR__."{$api_path}/Food.php";
 require __DIR__."{$api_path}/Government.php";
 

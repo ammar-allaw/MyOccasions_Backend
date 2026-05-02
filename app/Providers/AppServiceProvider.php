@@ -12,6 +12,10 @@ use App\Repositories\ServiceProvider\ServiceProviderRepository;
 use App\Repositories\ServiceProvider\ServiceProviderRepositoryInterface;
 use App\Repositories\User\UserRepository;
 use App\Repositories\User\UserRepositoryInterface;
+use App\Repositories\Food\FoodRepository;
+use App\Repositories\Food\FoodRepositoryInterface;
+use App\Services\Food\FoodService;
+use App\Services\Food\FoodServiceInterface;
 use App\Services\Owner\Permission\PermissionService;
 use App\Services\Owner\Permission\PermissionServiceInterface;
 use App\Services\Owner\Role\RoleService;
@@ -37,6 +41,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ServiceProviderServiceInterface::class, ServiceProviderService::class);
         $this->app->bind(ServiceRepositoryInterface::class, ServiceRepository::class);
         $this->app->bind(ServiceServiceInterface::class, ServiceService::class);
+        $this->app->bind(FoodRepositoryInterface::class, FoodRepository::class);
+        $this->app->bind(FoodServiceInterface::class, FoodService::class);
         
         $this->app->bind(RoleRepositoryInterface::class, RoleRepository::class);
         $this->app->bind(RoleServiceInterface::class, RoleService::class);

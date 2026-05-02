@@ -131,6 +131,7 @@ class Handler extends ExceptionHandler
     
         public function successResponse($data, $success = true, $message = null, $statusCode = 200)
         {
+            $statusCode = $this->normalizeStatusCode($statusCode);
             return response()->json([
                 'success' => $success,
                 'message' => $message,
@@ -140,11 +141,21 @@ class Handler extends ExceptionHandler
 
         public function errorResponse($success = false, $message = null, $data = null, $statusCode = 400)
         {
+            $statusCode = $this->normalizeStatusCode($statusCode);
             return response()->json([
                 'success' => $success,
                 'message' => $message,
                 'data' => $data,
             ], $statusCode);
+        }
+
+        protected function normalizeStatusCode($statusCode): int
+        {
+            $statusCode = is_numeric($statusCode) ? (int) $statusCode : null;
+            if (! $statusCode || $statusCode < 100 || $statusCode > 599) {
+                return 400;
+            }
+            return $statusCode;
         }
     
         protected function getErrorMessage(Throwable $exception)
