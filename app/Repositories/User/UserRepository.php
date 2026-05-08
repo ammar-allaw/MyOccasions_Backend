@@ -135,6 +135,12 @@ class UserRepository implements UserRepositoryInterface
                     });
                 }
 
+                if (!empty($filters['type_id'])) {
+                    $query->whereHas('types', function($typeQuery) use ($filters) {
+                        $typeQuery->where('types.id', $filters['type_id']);
+                    });
+                }
+
                 // Service Filters: Main key and service price
                 // if (!empty($filters['main_key_id']) || isset($filters['service_min_price']) || isset($filters['service_max_price'])) {
                 //     $query->whereHas('services', function($serviceQ) use ($filters) {

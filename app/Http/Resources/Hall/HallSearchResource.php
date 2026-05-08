@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Hall;
 
+use App\Http\Resources\Image\GetImageUrlResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,16 +26,16 @@ class HallSearchResource extends JsonResource
 
         if ($serviceProvider) {
             $hallName = $locale === 'en' ? $serviceProvider->name_en : $serviceProvider->name;
-            
-            // Get one image for the hall
-            // Primary collection: 'service_provider_image'
-            $hallImage = $serviceProvider->getFirstMediaUrl('service_provider_image');
-            if (empty($hallImage)) {
-                $hallImage = $serviceProvider->getFirstMediaUrl('images');
+
+            $hallImages = $serviceProvider->getMedia('service_provider_image');
+            if ($hallImages->isEmpty()) {
+                $hallImages = $serviceProvider->getMedia('images');
             }
-            if (empty($hallImage)) {
-                 $hallImage = $serviceProvider->getFirstMediaUrl('default');
+            if ($hallImages->isEmpty()) {
+                $hallImages = $serviceProvider->getMedia('default');
             }
+
+            $hallImage = GetImageUrlResource::collection($hallImages);
 
             $rooms = $serviceProvider->rooms;
             
@@ -79,7 +80,7 @@ class HallSearchResource extends JsonResource
                 'description' => $locale === 'en' ? $matchingRoom->description_en : $matchingRoom->description,
                 'price' => $matchingRoom->rent_price,
                 'capacity' => $matchingRoom->capacity,
-                'image' => $matchingRoom->getFirstMediaUrl('room_image'),
+                'image' => GetImageUrlResource::collection($matchingRoom->getMedia('room_image')),
             ];
         }
 

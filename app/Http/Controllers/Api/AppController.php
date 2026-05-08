@@ -7,8 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Hall\HallSearchResource;
 use App\Http\Resources\Hall\ServiceResource;
 use App\Http\Resources\Services\SearchServiceResource;
+use App\Http\Resources\Type\TypeResource;
 use App\Http\Resources\User\UserResource;
 use App\Models\Client;
+use App\Models\Type;
 use App\Services\Auth\AuthService;
 use App\Services\Service\ServiceServiceInterface;
 use App\Services\ServiceProvider\ServiceProviderServiceInterface;
@@ -58,6 +60,27 @@ class AppController extends Controller
                     'success get roles',
                     200);
 
+    }
+
+    public function getTypes()
+    {
+        $filters = request()->all();
+        $query = Type::query()->orderBy('name_en');
+
+        if (!empty($filters['role_id'])) {
+            $query->where('role_id', $filters['role_id']);
+        }
+
+        $types = $query->get();
+
+        return $this->handler->successResponse(
+            [
+                'types' => TypeResource::collection($types),
+            ],
+            true,
+            'success get types',
+            200
+        );
     }
 
     //we should make api get service provider for flutter
