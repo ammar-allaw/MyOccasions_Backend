@@ -25,6 +25,11 @@ class Role extends Model
         return $this->hasMany(MainKey::class);
     }
 
+    public function types()
+    {
+        return $this->hasMany(Type::class);
+    }
+
     public function checkRoleIfHasPermission($role,$permission_id){
         $role_has_permission=$role->permissions()->where('permission_id', $permission_id)->exists();
         if($role_has_permission){

@@ -42,25 +42,21 @@ class ServiceProviderController extends Controller
         try {
 
             $user = $this->authService->authUser();
-            if($user && $user->is_provider==true) {
+            if ($user && $user->is_provider == true) {
                 $user->load('userable');
-                $serviceProvider = $user->userable;
             } else {
-                if((Auth::guard('owner')->check() || 
-                (Auth::guard('api')->check() && Auth::guard('api')->user()->is_provider==false))
-                 && $userId != null) {
+                if ((Auth::guard('owner')->check() || 
+                    (Auth::guard('api')->check() && Auth::guard('api')->user()->is_provider == false))
+                    && $userId != null) {
                     $user = $this->userService->findUserById($userId);
                     $user->load('userable');
-                    $serviceProvider = $user->userable;
-
                 } else {
                     return $this->handler->errorResponse(false, 'Unauthorized', [], 401);
                 }
             }
-            // $user = $this->userService->findUserById($userId);
-            // $serviceProvider = $this->serviceProviderService->findServiceProviderById($serviceProviderId);
-            // $user = $serviceProvider->user;
-            // $user->load('userable.orderStatusAble.status');
+
+            $user->loadMissing(['role.permissions', 'userPermissions']);
+
             return $this->handler->successResponse(
                 ['serviceProvider' => new UserResource($user)],
                 true,

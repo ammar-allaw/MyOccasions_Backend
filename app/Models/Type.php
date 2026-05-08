@@ -11,6 +11,17 @@ class Type extends Model
 
     protected $fillable = [
         'name',
-        'name_ar',
+        'name_en',
+        'role_id',
     ];
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function serviceProviders()
+    {
+        return $this->belongsToMany(ServiceProvider::class, 'service_provider_types');
+    }
 }
