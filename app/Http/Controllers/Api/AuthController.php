@@ -74,7 +74,11 @@ class AuthController extends Controller
                 $user->load('role');
                 $role_name=$user->role->name_en;
                 $dive_name = $request->post('dive_name',$request->userAgent('sanctum.expiration'));
-                $userToken=$user->createToken($dive_name, ['*'], now()->addDays(7));
+                if($user->is_provider){
+                    $userToken=$user->createToken($dive_name, ['*'], now()->addDays(7));
+                }else {
+                    $userToken=$user->createToken($dive_name);
+                }
                 return $this->handler->successResponse(
                     ['user'=>new UserResource($user),'token'=>$userToken->plainTextToken],
                     true,

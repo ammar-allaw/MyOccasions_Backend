@@ -62,27 +62,6 @@ class AppController extends Controller
 
     }
 
-    public function getTypes()
-    {
-        $filters = request()->all();
-        $query = Type::query()->orderBy('name_en');
-
-        if (!empty($filters['role_id'])) {
-            $query->where('role_id', $filters['role_id']);
-        }
-
-        $types = $query->get();
-
-        return $this->handler->successResponse(
-            [
-                'types' => TypeResource::collection($types),
-            ],
-            true,
-            'success get types',
-            200
-        );
-    }
-
     //we should make api get service provider for flutter
 
     public function getServiceProvidersByRoleId($roleId)

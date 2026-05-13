@@ -10,6 +10,7 @@ use App\Http\Requests\ServiceProvider\UpdateServiceProviderRequest;
 use App\Http\Resources\Image\GetImageUrlResource;
 use App\Http\Resources\User\UserResource;
 use App\Models\ServiceProvider;
+use App\Models\Type;
 use App\Services\Auth\AuthService;
 use App\Services\ServiceProvider\ServiceProviderServiceInterface;
 use App\Services\User\UserServiceInterface;
@@ -203,6 +204,50 @@ class ServiceProviderController extends Controller
                     'address_url' => 'رابط الموقع',
                 ]);
             }
+
+            if (isset($data['type_id']) || isset($data['delete_type_id'])) {
+                if (!$isOwner) {
+                    DB::rollBack();
+                    return $this->handler->errorResponse(
+                        false,
+                        'Only owner can update service provider types',
+                        null,
+                        403
+                    );
+                }
+
+                if (isset($data['type_id'])) {
+                    $typeIds = is_array($data['type_id']) ? $data['type_id'] : [$data['type_id']];
+                    foreach ($typeIds as $typeId) {
+                        if (!$this->typeBelongsToProviderRole($serviceProvider, $typeId)) {
+                            DB::rollBack();
+                            return $this->handler->errorResponse(
+                                false,
+                                'Type does not belong to this service provider role',
+                                null,
+                                422
+                            );
+                        }
+                    }
+                    $this->userService->addTypesToServiceProvider($serviceProvider, $typeIds);
+                }
+
+                if (isset($data['delete_type_id'])) {
+                    $deleteTypeIds = is_array($data['delete_type_id']) ? $data['delete_type_id'] : [$data['delete_type_id']];
+                    foreach ($deleteTypeIds as $typeId) {
+                        if (!$this->typeBelongsToProviderRole($serviceProvider, $typeId)) {
+                            DB::rollBack();
+                            return $this->handler->errorResponse(
+                                false,
+                                'Type does not belong to this service provider role',
+                                null,
+                                422
+                            );
+                        }
+                    }
+                    $this->userService->removeTypesFromServiceProvider($serviceProvider, $deleteTypeIds);
+                }
+            }
             
             $updatedUser = $this->userService->updateServiceProvider($serviceProvider, $data);
             $updatedUser->load('userable.orderStatusAble.status');
@@ -260,6 +305,19 @@ class ServiceProviderController extends Controller
             DB::rollBack();
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
+    }
+
+    private function typeBelongsToProviderRole(ServiceProvider $serviceProvider, int $typeId): bool
+    {
+        $providerRoleId = $serviceProvider->user?->role_id;
+
+        if (!$providerRoleId) {
+            return false;
+        }
+
+        return Type::where('id', $typeId)
+            ->where('role_id', $providerRoleId)
+            ->exists();
     }
 
 }

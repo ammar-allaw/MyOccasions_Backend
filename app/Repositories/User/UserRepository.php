@@ -206,4 +206,9 @@ class UserRepository implements UserRepositoryInterface
     {
         return $serviceProvider->types()->syncWithoutDetaching($types);
     }
+
+    public function removeTypesFromServiceProvider($serviceProvider, $types)
+    {
+        return $serviceProvider->types()->detach($types);
+    }
 }

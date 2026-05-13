@@ -19,6 +19,17 @@ class UpdateServiceProviderRequest extends FormRequest
      *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('type_id') && !is_array($this->type_id)) {
+            $this->merge(['type_id' => [$this->type_id]]);
+        }
+
+        if ($this->has('delete_type_id') && !is_array($this->delete_type_id)) {
+            $this->merge(['delete_type_id' => [$this->delete_type_id]]);
+        }
+    }
+
     public function rules(): array
     {
         $userId = $this->route('userId') ?? auth()->id();
@@ -44,7 +55,10 @@ class UpdateServiceProviderRequest extends FormRequest
             'replace_all' => 'nullable|boolean',
             'status_id' => 'nullable|exists:statuses,id',
             'rejection_reason' => 'nullable|string|required_if:status_id,2',
-            
+            'type_id' => 'nullable|array',
+            'type_id.*' => 'integer|exists:types,id',
+            'delete_type_id' => 'nullable|array',
+            'delete_type_id.*' => 'integer|exists:types,id',
         ];
     }
 }
