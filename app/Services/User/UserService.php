@@ -153,4 +153,9 @@ class UserService implements UserServiceInterface
         return $this->userRepo->addTypesToServiceProvider($serviceProvider, $types);
     }
 
+    public function removeTypesFromServiceProvider($serviceProvider, $types)
+    {
+        return $this->userRepo->removeTypesFromServiceProvider($serviceProvider, $types);
+    }
+
 }
