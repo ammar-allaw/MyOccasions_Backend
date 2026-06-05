@@ -5,6 +5,7 @@ namespace App\Http\Resources\User;
 use App\Http\Resources\Hall\RoomResource;
 use App\Http\Resources\Hall\ServiceResource;
 use App\Http\Resources\Image\GetImageUrlResource;
+use App\Http\Resources\Type\TypeResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -62,6 +63,9 @@ class ServiceProvideResource extends JsonResource
                 'services' => $this->whenLoaded('services', function () {
                     return ServiceResource::collection($this->services);
                 }, []),
+                'types' => $this->whenLoaded('types', function () {
+                    return TypeResource::collection($this->types);
+                }, []),
                 'images' => $this->whenLoaded('media', function () {
                     return GetImageUrlResource::collection($this->media);
                 }, []),
@@ -92,6 +96,9 @@ class ServiceProvideResource extends JsonResource
             }, []),
             'services' => $this->whenLoaded('services', function () {
                 return ServiceResource::collection($this->services);
+            }, []),
+            'types' => $this->whenLoaded('types', function () {
+                return TypeResource::collection($this->types);
             }, []),
             'images' => $this->whenLoaded('media', function () {
                 return GetImageUrlResource::collection($this->media);
