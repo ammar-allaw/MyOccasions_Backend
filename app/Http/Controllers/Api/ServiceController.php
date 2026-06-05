@@ -6,6 +6,7 @@ use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Service\AddMainKeyRequest;
 use App\Http\Requests\Service\UpdateMainKeyRequest;
+use App\Http\Resources\App\MainKeyResource;
 use App\Http\Resources\Services\ServicesResource;
 use App\Services\Auth\AuthService;
 use App\Http\Resources\Hall\ServiceResource;
@@ -147,7 +148,11 @@ class ServiceController extends Controller
             $data=$request->all();
             $data['lang']=$lang;
             $mainKeys=$this->serviceService->getMainKeys($data);
-            return $this->handler->successResponse($mainKeys, true, 'Main Keys retrieved successfully');
+            return $this->handler->successResponse(
+                MainKeyResource::collection($mainKeys),
+                true,
+                $this->message('main_keys_retrieved')
+            );
         }catch(\Exception $e){
             // $status = $e->getCode() ?: 400;
             if ($e instanceof \Symfony\Component\HttpKernel\Exception\HttpExceptionInterface) {
@@ -155,7 +160,7 @@ class ServiceController extends Controller
             } else {
                 $status = $e->getCode() ?: 400;
             }
-            return $this->handler->errorResponse(false, $e->getMessage(), null, $status);
+            return $this->handler->errorResponse(false, $this->messageFromException($e), null, $status);
         }
     }
 
@@ -184,5 +189,31 @@ class ServiceController extends Controller
             $status = $e->getCode() ?: 400;
             return $this->handler->errorResponse(false, $e->getMessage(),null, $status);
         }
+    }
+
+    private function message(string $key): string
+    {
+        $locale = request()->header('Accept-Language', 'ar');
+
+        $messages = [
+            'ar' => [
+                'main_keys_retrieved' => 'تم جلب المفاتيح الرئيسية بنجاح',
+                'role_id_required' => 'حقل الدور مطلوب',
+            ],
+            'en' => [
+                'main_keys_retrieved' => 'Main Keys retrieved successfully',
+                'role_id_required' => 'role_id is required',
+            ],
+        ];
+
+        return $messages[$locale === 'en' ? 'en' : 'ar'][$key] ?? $key;
+    }
+
+    private function messageFromException(\Exception $e): string
+    {
+        return match ($e->getMessage()) {
+            'role_id is required' => $this->message('role_id_required'),
+            default => $e->getMessage(),
+        };
     }
 }

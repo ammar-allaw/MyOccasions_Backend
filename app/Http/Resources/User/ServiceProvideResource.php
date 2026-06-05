@@ -5,6 +5,7 @@ namespace App\Http\Resources\User;
 use App\Http\Resources\Hall\RoomResource;
 use App\Http\Resources\Hall\ServiceResource;
 use App\Http\Resources\Image\GetImageUrlResource;
+use App\Http\Resources\Type\TypeResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -30,8 +31,8 @@ class ServiceProvideResource extends JsonResource
         // الحصول على اللغة من الـ header
         $locale = $request->header('Accept-Language', 'ar');
         
-        // تحديد إذا كان المستخدم owner أو hall
-        $isOwnerOrHall = false;
+        // تحديد إذا كان المستخدم owner أو service provider
+        $isOwnerOrServiceProvider = false;
         if ($authUser) {
             // تحميل العلاقة role إذا لم تكن محملة
             if (!$authUser->relationLoaded('role')) {
@@ -40,12 +41,12 @@ class ServiceProvideResource extends JsonResource
             
             if ($authUser->role) {
                 $roleName = $authUser->role->name_en ?? '';
-                $isOwnerOrHall = in_array($roleName, ['owner', 'halls']);
+                $isOwnerOrServiceProvider = $roleName === 'owner' || (bool) $authUser->is_provider;
             }
         }
         
-        // إذا كان owner أو hall، نرجع كل شيء (عربي وإنجليزي)
-        if ($isOwnerOrHall) {
+        // إذا كان owner أو service provider، نرجع كل شيء (عربي وإنجليزي)
+        if ($isOwnerOrServiceProvider) {
             return [
                 'id' => $this->id,
                 'phone_number' => $this->user->phone_number ?? null,
@@ -56,11 +57,28 @@ class ServiceProvideResource extends JsonResource
                 'description_en' => $this->description_en,
                 'location' => $this->location,
                 'location_en' => $this->location_en,
+                'government' => $this->whenLoaded('government', function () {
+                    return $this->government ? [
+                        'id' => $this->government->id,
+                        'name' => $this->government->name,
+                        'name_en' => $this->government->name_en,
+                    ] : null;
+                }),
+                'region' => $this->whenLoaded('region', function () {
+                    return $this->region ? [
+                        'id' => $this->region->id,
+                        'name' => $this->region->name,
+                        'name_en' => $this->region->name_en,
+                    ] : null;
+                }),
                 'rooms' => $this->whenLoaded('rooms', function () {
                     return RoomResource::collection($this->rooms);
                 }, []),
                 'services' => $this->whenLoaded('services', function () {
                     return ServiceResource::collection($this->services);
+                }, []),
+                'types' => $this->whenLoaded('types', function () {
+                    return TypeResource::collection($this->types);
                 }, []),
                 'images' => $this->whenLoaded('media', function () {
                     return GetImageUrlResource::collection($this->media);
@@ -87,11 +105,26 @@ class ServiceProvideResource extends JsonResource
             'name' => $locale === 'en' ? $this->name_en : $this->name,
             'description' => $locale === 'en' ? $this->description_en : $this->description,
             'location' => $locale === 'en' ? $this->location_en : $this->location,
+            'government' => $this->whenLoaded('government', function () use ($locale) {
+                return $this->government ? [
+                    'id' => $this->government->id,
+                    'name' => $locale === 'en' ? $this->government->name_en : $this->government->name,
+                ] : null;
+            }),
+            'region' => $this->whenLoaded('region', function () use ($locale) {
+                return $this->region ? [
+                    'id' => $this->region->id,
+                    'name' => $locale === 'en' ? $this->region->name_en : $this->region->name,
+                ] : null;
+            }),
             'rooms' => $this->whenLoaded('rooms', function () {
                 return RoomResource::collection($this->rooms);
             }, []),
             'services' => $this->whenLoaded('services', function () {
                 return ServiceResource::collection($this->services);
+            }, []),
+            'types' => $this->whenLoaded('types', function () {
+                return TypeResource::collection($this->types);
             }, []),
             'images' => $this->whenLoaded('media', function () {
                 return GetImageUrlResource::collection($this->media);

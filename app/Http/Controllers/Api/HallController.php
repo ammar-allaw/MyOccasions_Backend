@@ -328,6 +328,9 @@ class HallController extends Controller
                     'services.orderStatusAble.status',
                     'services.media',
                     'media',
+                    'types',
+                    'government',
+                    'region',
                 ]);
                 
                 // التحقق من أن الصالة نفسها مقبولة
@@ -351,6 +354,9 @@ class HallController extends Controller
                 'services.orderStatusAble.status',
                 'services.media',
                 'media',
+                'types',
+                'government',
+                'region',
             ]);
         }
         
