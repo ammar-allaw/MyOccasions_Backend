@@ -44,7 +44,7 @@ class AuthController extends Controller
             $user = $this->userService->createUser($data, $client);
             $user->load('role');
             $dive_name = $dataRequest->post('dive_name', $dataRequest->userAgent()) ?? 'web';
-            $userToken = $user->createToken($dive_name);
+            $userToken = $user->createToken($dive_name, ['*'], null);
             return $this->handler->successResponse(
                 ['user' => new UserResource($user), 'token' => $userToken->plainTextToken],
                 true,
@@ -64,12 +64,12 @@ class AuthController extends Controller
             $dataRequest=$request->validated();
             // $user=User::where('phone_number','=',$dataRequest['phone_number'])->first();
             $user=$this->userService->findUserByPhoneNumber($dataRequest['phone_number']);
-            // if(!$user){
-            //     return $this->handler->errorResponse(
-            //         false,
-            //         'User not found',
-            //         null,404);     
-            // }
+            if(!$user){
+                return $this->handler->errorResponse(
+                    false,
+                    'User not found',
+                    null,404);     
+            }
             if(Hash::check($dataRequest['password'],$user->password)){
                 $user->load('role');
                 $role_name=$user->role->name_en;
@@ -77,7 +77,7 @@ class AuthController extends Controller
                 if($user->is_provider){
                     $userToken=$user->createToken($dive_name, ['*'], now()->addDays(7));
                 }else {
-                    $userToken=$user->createToken($dive_name);
+                    $userToken=$user->createToken($dive_name, ['*'], null);
                 }
                 return $this->handler->successResponse(
                     ['user'=>new UserResource($user),'token'=>$userToken->plainTextToken],

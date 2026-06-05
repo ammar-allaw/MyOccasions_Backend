@@ -2,17 +2,25 @@
 
 namespace App\Http\Requests\Owner;
 
+use App\Http\Requests\Concerns\NormalizesSyrianPhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class AddServiceProviderRequest extends FormRequest
 {
+    use NormalizesSyrianPhoneNumber;
+
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->mergeNormalizedSyrianPhoneNumber();
     }
 
     /**
@@ -29,7 +37,7 @@ class AddServiceProviderRequest extends FormRequest
             'location_en'=>'required|string|min:5|max:250',
             'phone_number'=>[
                 'required',
-                'regex:/^09[0-9]{8}$/',
+                $this->syrianPhoneNumberRule(),
                 Rule::unique('users', 'phone_number')->where(function ($query) {
                     return $query->where('role_id', $this->input('role_id'));
                 }),

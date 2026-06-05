@@ -2,10 +2,14 @@
 
 namespace App\Http\Requests\ServiceProvider;
 
+use App\Http\Requests\Concerns\NormalizesSyrianPhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateServiceProviderRequest extends FormRequest
 {
+    use NormalizesSyrianPhoneNumber;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -21,6 +25,8 @@ class UpdateServiceProviderRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
+        $this->mergeNormalizedSyrianPhoneNumber();
+
         if ($this->has('type_id') && !is_array($this->type_id)) {
             $this->merge(['type_id' => [$this->type_id]]);
         }
@@ -36,7 +42,16 @@ class UpdateServiceProviderRequest extends FormRequest
         
         return [
             // User fields
-            'phone_number' => 'nullable|string|unique:users,phone_number,' . $userId,
+            'phone_number' => [
+                'nullable',
+                'string',
+                $this->syrianPhoneNumberRule(),
+                Rule::unique('users', 'phone_number')
+                    ->ignore($userId)
+                    ->where(function ($query) {
+                        return $query->where('role_id', $this->input('role_id'));
+                    }),
+            ],
             'password' => 'nullable|string|min:8',            
             'name' => 'nullable|string|max:255',
             'name_en' => 'nullable|string|max:255',
