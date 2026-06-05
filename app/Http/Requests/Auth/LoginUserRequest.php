@@ -2,16 +2,24 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Http\Requests\Concerns\NormalizesSyrianPhoneNumber;
 use Illuminate\Foundation\Http\FormRequest;
 
 class LoginUserRequest extends FormRequest
 {
+    use NormalizesSyrianPhoneNumber;
+
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
         return true;
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->mergeNormalizedSyrianPhoneNumber();
     }
 
     /**
@@ -22,7 +30,7 @@ class LoginUserRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'phone_number'=>'required|exists:users,phone_number',
+            'phone_number'=>['required', 'string', $this->syrianPhoneNumberRule(), 'exists:users,phone_number'],
             'password'=>'required'
         ];
     }
