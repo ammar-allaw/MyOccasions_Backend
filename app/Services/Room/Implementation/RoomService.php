@@ -8,9 +8,9 @@ use App\Models\Room;
 use App\Models\ServiceProvider;
 use App\Models\Status;
 use App\Repositories\Room\Interface\RoomRepositoryInterface;
+use App\Repositories\User\Interface\UserRepositoryInterface;
 use App\Services\Auth\AuthService;
 use App\Services\Room\Interface\RoomServiceInterface;
-use App\Services\User\Interface\UserServiceInterface;
 use App\Traits\TracksChanges;
 use Exception;
 use Illuminate\Http\Request;
@@ -25,7 +25,7 @@ class RoomService implements RoomServiceInterface
         private RoomRepositoryInterface $roomRepo,
         private Handler $handler,
         private AuthService $authService,
-        private UserServiceInterface $userService,
+        private UserRepositoryInterface $userRepository,
     ) {}
 
     public function addRoom(array $data, Request $request, $serviceProviderId = null): Room
@@ -34,7 +34,7 @@ class RoomService implements RoomServiceInterface
         try {
             $isOwner = Auth::guard('owner')->check();
             if ($isOwner && $serviceProviderId) {
-                $user = $this->userService->findUserById($serviceProviderId);
+                $user = $this->userRepository->findUserById($serviceProviderId);
                 $hall = $user->userable;
             } else {
                 $authUser = $this->authService->authUser();
@@ -168,7 +168,7 @@ class RoomService implements RoomServiceInterface
 
     public function getRoomsByHallId($hallId)
     {
-        $user = $this->userService->findUserById($hallId);
+        $user = $this->userRepository->findUserById($hallId);
         $user->load('userable');
         $hall = $user->userable;
 
@@ -197,7 +197,7 @@ class RoomService implements RoomServiceInterface
             if (! $userId) {
                 throw new ApiResponseException('Hall ID is required', 400, null);
             }
-            $user = $this->userService->findUserById($userId);
+            $user = $this->userRepository->findUserById($userId);
             if ($user->role->name_en != 'halls') {
                 throw new ApiResponseException('The specified user is not a hall', 400, null);
             }

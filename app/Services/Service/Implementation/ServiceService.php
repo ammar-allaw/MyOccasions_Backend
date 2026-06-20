@@ -9,10 +9,10 @@ use App\Models\Service;
 use App\Models\ServiceProvider;
 use App\Models\Status;
 use App\Repositories\Service\Interface\ServiceRepositoryInterface;
+use App\Repositories\User\Interface\UserRepositoryInterface;
 use App\Services\Auth\AuthService;
 use App\Services\Room\Interface\RoomServiceInterface;
 use App\Services\Service\Interface\ServiceServiceInterface;
-use App\Services\User\Interface\UserServiceInterface;
 use App\Traits\TracksChanges;
 use Exception;
 use Illuminate\Http\Request;
@@ -27,7 +27,7 @@ class ServiceService implements ServiceServiceInterface
         private ServiceRepositoryInterface $serviceRepo,
         private Handler $handler,
         private AuthService $authService,
-        private UserServiceInterface $userService,
+        private UserRepositoryInterface $userRepository,
         private RoomServiceInterface $roomService,
     ) {}
 
@@ -152,7 +152,7 @@ class ServiceService implements ServiceServiceInterface
             if (! $serviceProviderId) {
                 throw new ApiResponseException('Service provider ID is required', 400, null);
             }
-            $user = $this->userService->findUserById($serviceProviderId);
+            $user = $this->userRepository->findUserById($serviceProviderId);
             $serviceProvider = $user->userable;
         } else {
             $user = $this->authService->authUser();

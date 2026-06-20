@@ -8,10 +8,6 @@ use Illuminate\Support\Facades\Route;
 
 Route::controller(OwnerController::class)->prefix('owner')
 ->group(function(){
-        //not used now by ammar
-        Route::get('/get-all-rooms-with-status','getAllRoomsWithStatus')->name('get-all-rooms-with-status')
-        ->middleware(['auth:owner']);
-
         Route::delete('/force-delete-service-provider/{serviceProviderId}','forceDeleteServiceProvider')->name('force-delete-service-provider')
         ->middleware(['auth:owner']);
 
