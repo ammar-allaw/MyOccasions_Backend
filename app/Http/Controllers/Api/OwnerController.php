@@ -4,50 +4,25 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Owner\UpdateRoomStatusRequest;
-use App\Http\Requests\User\AddServiceRequest;
-use App\Http\Resources\Hall\RoomResource;
 use App\Http\Resources\User\UserResource;
 use App\Services\Auth\AuthService;
-use App\Services\Owner\OwnerService;
-use App\Services\ServiceProvider\Interface\ServiceProviderServiceInterface;
 use App\Services\User\Interface\UserServiceInterface;
 use Exception;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 class OwnerController extends Controller
 {
     public $handler;
     private $userService;
-    private $serviceProviderService;
-    private $ownerService;
     private $authService;
-    public function __construct(Handler $handler,UserServiceInterface $userService
-    ,ServiceProviderServiceInterface $serviceProviderService,OwnerService $ownerService
-    ,AuthService $authService)
+    public function __construct(Handler $handler, UserServiceInterface $userService, AuthService $authService)
     {
         $this->handler=$handler;
         $this->userService=$userService;
-        $this->serviceProviderService=$serviceProviderService;
-        $this->ownerService=$ownerService;
         $this->authService=$authService;
     }
 
-    //used 
-    //we use this function to get roles for owner to add service provider
-    public function getRolesForOwner()
-    {
-        $roles=$this->ownerService->getRolesForOwner();
-        return $this->handler->successResponse(
-                ['roles'=>$roles],
-                true,
-                'success get roles service provider',
-                200);   
-    }
-
-    // public function getServiceProvidersByRoleIdForOwner($roleId)
+    // public function getServiceProvidersByRoleIdForOwner($roleId = null)
     // {
     //     $role = $this->authService->findRoleById($roleId);
 
@@ -78,110 +53,6 @@ class OwnerController extends Controller
     //         200
     //     );
     // }
-
-    //used
-    //we use this function to get service providers by role id for owner with pagination
-    public function getServiceProvidersByRoleIdForOwner($roleId = null)
-    {
-        if ($roleId) {
-            $role = $this->authService->findRoleById($roleId);
-            $collection = $this->userService->getUserByRoleIdForOwner($role);
-        } else {
-            $collection = $this->userService->getAllUser();
-        }
-
-        $collection = $collection->sortByDesc('id');
-
-        
-        // تحويل الـ Collection إلى Paginator يدويًا
-        $perPage = request()->get('per_page', 10);
-        $page = request()->get('page', 1);
-        $offset = ($page - 1) * $perPage;
-        $paginated = new LengthAwarePaginator(
-            $collection->slice($offset, $perPage)->values(),
-            $collection->count(),
-            $perPage,
-            $page,
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
-
-        return $this->handler->successResponse(
-            [
-                'serviceProviders' => UserResource::collection($paginated),
-                'pagination' => [
-                    'current_page' => $paginated->currentPage(),
-                    'last_page' => $paginated->lastPage(),
-                    'per_page' => $paginated->perPage(),
-                    'total' => $paginated->total(),
-                ],
-            ],
-            true,
-            'success get serviceProviders',
-            200
-        );
-    }
-
-    // public function updateRoomStatus(UpdateRoomStatusRequest $request, $roomId)
-    // {
-    //     try {
-    //         $data = $request->validated();
-            
-    //         // البحث عن الـ room
-    //         $room = $this->serviceProviderService->findRoom($roomId);
-    //         if (!$room) {
-    //             return $this->handler->errorResponse(
-    //                 false,
-    //                 'Room not found',
-    //                 null,
-    //                 404
-    //             );
-    //         }
-
-    //         // التحقق من وجود OrderStatus للـ room
-    //         $orderStatus = $room->orderStatusAble;
-            
-    //         if (!$orderStatus) {
-    //             return $this->handler->errorResponse(
-    //                 false,
-    //                 'No status record found for this room',
-    //                 null,
-    //                 404
-    //             );
-    //         }
-
-    //         // تحديث الـ status
-    //         $orderStatus->status_id = $data['status_id'];
-    //         $orderStatus->save();
-
-    //         $orderStatus->load('status');
-
-    //         return $this->handler->successResponse(
-    //             true,
-    //             'Room status updated successfully',
-    //             [
-    //                 'order_status' => [
-    //                     'id' => $orderStatus->id,
-    //                     'status' => [
-    //                         'id' => $orderStatus->status->id,
-    //                         'name' => $orderStatus->status->name,
-    //                         'name_en' => $orderStatus->status->name_en,
-    //                     ],
-    //                     'orderable_id' => $orderStatus->orderable_id,
-    //                     'orderable_type' => $orderStatus->orderable_type,
-    //                 ]
-    //             ],
-    //             200
-    //         );
-    //     } catch (Exception $e) {
-    //         return $this->handler->errorResponse(
-    //             false,
-    //             $e->getMessage(),
-    //             null,
-    //             400
-    //         );
-    //     }
-    // }
-
 
     /**
      * Get role_permissions and user_permissions for a user.

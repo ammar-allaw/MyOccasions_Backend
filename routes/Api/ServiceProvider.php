@@ -18,6 +18,10 @@ Route::controller(ServiceProviderController::class)->prefix('service-provider')
         ->middleware(['auth.provider.or.owner']);
 });
 
+Route::controller(ServiceProviderController::class)->prefix('owner')->middleware('auth:owner')->group(function () {
+    Route::get('/get-service-providers/{roleId?}', 'getServiceProvidersByRoleIdForOwner')->name('get-service-providers');
+});
+
 Route::post('/owner/add-service-provider', [ServiceProviderController::class, 'addServiceProvider'])
     ->name('add-service-provider')
     ->middleware(['auth:owner']);

@@ -194,7 +194,9 @@ class ServiceService implements ServiceServiceInterface
                         'mime_type' => 'text/url',
                         'youtube_link' => $request->youtube_link,
                     ]);
-                } elseif ($request->hasFile('gallery')) {
+                }
+
+                if ($request->hasFile('gallery')) {
                     $currentGalleryCount = $services->getMedia('gallery')->count();
                     $this->handler->attachImagesToModel(
                         $services,
@@ -289,43 +291,15 @@ class ServiceService implements ServiceServiceInterface
                     $userRole = $providerUser->role->name_en ?? '';
 
                     if ($this->isVisualProvider($userRole) || $isOwner) {
-                        $hasGallery = $service->getMedia('gallery')->count() > 0;
-                        $hasYoutubeLink = $service->getMedia('service_link_youtube')->count() > 0;
-
                         if ($request->filled('youtube_link')) {
-                            if ($hasGallery) {
-                                DB::rollBack();
-                                throw new ApiResponseException(
-                                    'Cannot add YouTube link because this service has a gallery. Please delete gallery images first.',
-                                    400,
-                                    null
-                                );
-                            }
+                            $this->handler->upsertYoutubeLinkOnModel(
+                                $service,
+                                'service_link_youtube',
+                                $request->input('youtube_link')
+                            );
+                        }
 
-                            $service->clearMediaCollection('service_link_youtube');
-                            $service->media()->create([
-                                'collection_name' => 'service_link_youtube',
-                                'name' => 'youtube_link',
-                                'file_name' => 'youtube_link',
-                                'disk' => 'public',
-                                'size' => 0,
-                                'manipulations' => [],
-                                'custom_properties' => [],
-                                'generated_conversions' => [],
-                                'responsive_images' => [],
-                                'mime_type' => 'text/url',
-                                'youtube_link' => $request->youtube_link,
-                            ]);
-                        } elseif ($request->hasFile('gallery') || $request->input('deleted_gallery_ids')) {
-                            if ($hasYoutubeLink) {
-                                DB::rollBack();
-                                throw new ApiResponseException(
-                                    'Cannot add or edit gallery because this service has a YouTube link. Please remove the YouTube link first.',
-                                    400,
-                                    null
-                                );
-                            }
-
+                        if ($request->hasFile('gallery') || $request->input('deleted_gallery_ids')) {
                             $this->handler->manageImagesOnModel(
                                 $service,
                                 'gallery',

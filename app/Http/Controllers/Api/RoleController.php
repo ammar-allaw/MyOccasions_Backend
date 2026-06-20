@@ -26,6 +26,18 @@ class RoleController extends Controller
         return $this->roleService->getBrowsableRolesForClient(auth()->user());
     }
 
+    public function getRolesForOwner()
+    {
+        $roles = $this->ownerRoleService->listRoles();
+
+        return $this->handler->successResponse(
+            ['roles' => $roles],
+            true,
+            'success get roles service provider',
+            200
+        );
+    }
+
     public function index()
     {
         try {

@@ -14,6 +14,7 @@ use App\Services\Auth\AuthService;
 use App\Services\User\Interface\UserServiceInterface;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 //this controller for service provider بشكل عام 
 class ServiceProviderController extends Controller
@@ -135,6 +136,44 @@ class ServiceProviderController extends Controller
     public function getServiceProvidersByRoleId($roleId)
     {
         return $this->userService->getServiceProvidersByRoleIdForClient(auth()->user(), $roleId);
+    }
+
+    public function getServiceProvidersByRoleIdForOwner($roleId = null)
+    {
+        if ($roleId) {
+            $role = $this->authService->findRoleById($roleId);
+            $collection = $this->userService->getUserByRoleIdForOwner($role);
+        } else {
+            $collection = $this->userService->getAllUser();
+        }
+
+        $collection = $collection->sortByDesc('id');
+
+        $perPage = request()->get('per_page', 10);
+        $page = request()->get('page', 1);
+        $offset = ($page - 1) * $perPage;
+        $paginated = new LengthAwarePaginator(
+            $collection->slice($offset, $perPage)->values(),
+            $collection->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        return $this->handler->successResponse(
+            [
+                'serviceProviders' => UserResource::collection($paginated),
+                'pagination' => [
+                    'current_page' => $paginated->currentPage(),
+                    'last_page' => $paginated->lastPage(),
+                    'per_page' => $paginated->perPage(),
+                    'total' => $paginated->total(),
+                ],
+            ],
+            true,
+            'success get serviceProviders',
+            200
+        );
     }
 
 }
