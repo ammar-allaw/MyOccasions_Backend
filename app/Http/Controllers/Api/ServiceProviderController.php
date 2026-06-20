@@ -320,4 +320,9 @@ class ServiceProviderController extends Controller
             ->exists();
     }
 
+    public function getServiceProvidersByRoleId($roleId)
+    {
+        return $this->userService->getServiceProvidersByRoleIdForClient(auth()->user(), $roleId);
+    }
+
 }

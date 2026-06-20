@@ -5,9 +5,18 @@ use App\Models\Client;
 use App\Models\ServiceProvider;
 use App\Models\User;
 use App\Repositories\User\UserRepositoryInterface;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class UserRepository implements UserRepositoryInterface
 {
+    private const CLIENT_BROWSE_WITH = [
+        'userable',
+        'userPermissions',
+        'role.permissions',
+        'userable.types',
+    ];
+
     public function findServiceProviderById($id)
     {
         return User::where('is_provider',1)->where('id',$id)->first();
@@ -93,33 +102,52 @@ class UserRepository implements UserRepositoryInterface
 
     public function getUserByRoleId($role, $filters = [])
     {
+        return $this->buildUserByRoleIdQuery($role, $filters)->get();
+    }
+
+    public function paginateUsersByRoleIdForClient($role, array $filters, int $page, int $perPage): LengthAwarePaginator
+    {
+        $collection = $this->buildUserByRoleIdQuery($role, $filters)
+            ->with(self::CLIENT_BROWSE_WITH)
+            ->get();
+
+        $page = max(1, $page);
+        $offset = ($page - 1) * $perPage;
+
+        return new LengthAwarePaginator(
+            $collection->slice($offset, $perPage)->values(),
+            $collection->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+    }
+
+    private function buildUserByRoleIdQuery($role, array $filters = []): Builder
+    {
         return User::query()
             ->where('role_id', $role->id)
             ->where('role_id', '!=', 2)
-            ->whereHasMorph('userable', [ServiceProvider::class], function($query) use ($filters) {
-                
-                // Filter by Search Name
-                if (!empty($filters['search'])) {
+            ->whereHasMorph('userable', [ServiceProvider::class], function ($query) use ($filters) {
+
+                if (! empty($filters['search'])) {
                     $search = $filters['search'];
-                    $query->where(function($q) use ($search) {
+                    $query->where(function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%")
-                          ->orWhere('name_en', 'like', "%{$search}%");
+                            ->orWhere('name_en', 'like', "%{$search}%");
                     });
                 }
 
-                // Filter by Government
-                if (!empty($filters['government_id'])) {
+                if (! empty($filters['government_id'])) {
                     $query->where('government_id', $filters['government_id']);
                 }
 
-                // Filter by Region
-                if (!empty($filters['region_id'])) {
+                if (! empty($filters['region_id'])) {
                     $query->where('region_id', $filters['region_id']);
                 }
-                
-                // Hall Filters: Rent Price & Capacity (Applying on related rooms)
+
                 if (isset($filters['min_price']) || isset($filters['max_price']) || isset($filters['min_capacity']) || isset($filters['max_capacity'])) {
-                    $query->whereHas('rooms', function($roomQ) use ($filters) {
+                    $query->whereHas('rooms', function ($roomQ) use ($filters) {
                         if (isset($filters['min_price'])) {
                             $roomQ->where('rent_price', '>=', $filters['min_price']);
                         }
@@ -135,39 +163,20 @@ class UserRepository implements UserRepositoryInterface
                     });
                 }
 
-                if (!empty($filters['type_id'])) {
-                    $query->whereHas('types', function($typeQuery) use ($filters) {
+                if (! empty($filters['type_id'])) {
+                    $query->whereHas('types', function ($typeQuery) use ($filters) {
                         $typeQuery->where('types.id', $filters['type_id']);
                     });
                 }
 
-                // Service Filters: Main key and service price
-                // if (!empty($filters['main_key_id']) || isset($filters['service_min_price']) || isset($filters['service_max_price'])) {
-                //     $query->whereHas('services', function($serviceQ) use ($filters) {
-                //         if (!empty($filters['main_key_id'])) {
-                //             $serviceQ->whereHas('mainKeys', function($mainKeyQ) use ($filters) {
-                //                 $mainKeyQ->where('main_keys.id', $filters['main_key_id']);
-                //             });
-                //         }
-
-                //         if (isset($filters['service_min_price'])) {
-                //             $serviceQ->where('price', '>=', $filters['service_min_price']);
-                //         }
-
-                //         if (isset($filters['service_max_price'])) {
-                //             $serviceQ->where('price', '<=', $filters['service_max_price']);
-                //         }
-                //     });
-                // }
-
-                $query->whereHas('orderStatusAble', function($statusQuery) {
-                    $statusQuery->whereHas('status', function($innerQuery) {
+                $query->whereHas('orderStatusAble', function ($statusQuery) {
+                    $statusQuery->whereHas('status', function ($innerQuery) {
                         $innerQuery->where('name_en', 'accepted');
                     });
                 });
-            })
-            ->get();
+            });
     }
+
     public function getUserByRoleIdForOwner($role)
     {
         return User::query()

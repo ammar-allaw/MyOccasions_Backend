@@ -19,3 +19,6 @@ Route::controller(ServiceProviderController::class)->prefix('service-provider')
         ->middleware(['auth.provider.or.owner']);
 });
 
+Route::get('/app/get-service-providers-by-role-id/{roleId}', [ServiceProviderController::class, 'getServiceProvidersByRoleId'])
+    ->name('get-service-providers-by-role-id')
+    ->middleware(['auth:api']);

@@ -11,7 +11,4 @@ Route::controller(AppController::class)->prefix('app')
 ->group(function(){
         Route::get('/get-roles','getRoles')->name('get-roles')
         ->middleware(['auth:api']);
-
-        Route::get('/get-service-providers-by-role-id/{roleId}','getServiceProvidersByRoleId')->name('get-service-providers-by-role-id')
-        ->middleware(['auth:api']);
 });

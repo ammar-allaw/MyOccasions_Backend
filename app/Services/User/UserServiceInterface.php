@@ -25,4 +25,6 @@ interface UserServiceInterface
     public function addTypesToServiceProvider($serviceProvider, $types);
     public function removeTypesFromServiceProvider($serviceProvider, $types);
     public function getServiceProviderById($serviceProviderId);
+
+    public function getServiceProvidersByRoleIdForClient($user, $roleId);
 }

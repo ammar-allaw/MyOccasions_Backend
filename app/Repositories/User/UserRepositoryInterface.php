@@ -24,4 +24,5 @@ interface UserRepositoryInterface
     public function addTypesToServiceProvider($serviceProvider, $types);
     public function removeTypesFromServiceProvider($serviceProvider, $types);
 
+    public function paginateUsersByRoleIdForClient($role, array $filters, int $page, int $perPage);
 }
