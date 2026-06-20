@@ -11,7 +11,7 @@ use App\Http\Requests\Auth\RegisterUserRequest;
 use App\Http\Resources\User\UserResource;
 use App\Models\User;
 use App\Services\Owner\OwnerService;
-use App\Services\User\UserServiceInterface;
+use App\Services\User\Interface\UserServiceInterface;
 use Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
@@ -132,52 +132,6 @@ class AuthController extends Controller
             ,401);
         }
     }
-
-
-    // public function addImageForServiceProvider(AddImageForServiceProvider $request,$serviceProviderId)
-    // {
-    //     $data=$request->validated();
-    //     $user=$this->userService->findUserById($serviceProviderId);
-    //     $serviceProvider=$user->userable;
-        
-    //     // استخدام manageImagesOnModel بدلاً من attachImagesToModel
-    //     $images = $this->handler->manageImagesOnModel(
-    //         $serviceProvider,
-    //         'service_provider_image',
-    //         $request->file('image'),
-    //         $maxAllowedImages = 3,
-    //         $replaceAll = $request->input('replace_all', false),
-    //         $replaceIds = $request->input('image_id', null)
-    //     );
-        
-    //     // تحديث حالة الصالة إلى under_review عند إضافة أو تعديل الصور
-    //     $underReviewStatus = \App\Models\Status::where('name_en', 'under_review')->first();
-    //     if ($underReviewStatus) {
-    //         $orderStatus = $serviceProvider->orderStatusAble;
-    //         if ($orderStatus) {
-    //             $orderStatus->update([
-    //                 'status_id' => $underReviewStatus->id,
-    //                 'change_description' => 'Service provider images updated',
-    //                 'last_modified_at' => now(),
-    //             ]);
-    //         } else {
-    //             // إنشاء OrderStatus جديد إذا لم يكن موجود
-    //             \App\Models\OrderStatus::create([
-    //                 'orderable_id' => $serviceProvider->id,
-    //                 'orderable_type' => get_class($serviceProvider),
-    //                 'status_id' => $underReviewStatus->id,
-    //                 'change_description' => 'Service provider images updated',
-    //                 'last_modified_at' => now(),
-    //             ]);
-    //         }
-    //     }
-        
-    //     return $this->handler->successResponse(
-    //                 true,
-    //                 'success add image for service provider',
-    //                 ['images'=>$images],
-    //                 201,);            
-    // }
 
     public function resetPassword(Request $request)
     {

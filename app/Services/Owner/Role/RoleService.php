@@ -2,8 +2,8 @@
 //new added
 namespace App\Services\Owner\Role;
 
-use App\Repositories\Role\RoleRepositoryInterface;
-use App\Services\User\UserServiceInterface;
+use App\Repositories\Role\Interface\RoleRepositoryInterface;
+use App\Services\User\Interface\UserServiceInterface;
 
 class RoleService implements RoleServiceInterface
 {

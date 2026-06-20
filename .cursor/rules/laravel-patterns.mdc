@@ -1,0 +1,67 @@
+---
+description: Repository, Service, SOLID, and N+1 prevention patterns
+globs: app/**/*.php
+alwaysApply: false
+---
+
+# Laravel Patterns — MyOccasions
+
+## Repository
+
+```php
+// app/Repositories/Food/Interface/FoodRepositoryInterface.php
+interface FoodRepositoryInterface {
+    public function query(array $filters = []): Builder;
+    public function findById(int $id): Food;
+}
+
+// app/Repositories/Food/Implementation/FoodRepository.php
+class FoodRepository implements FoodRepositoryInterface {
+    private const DEFAULT_WITH = ['mainKey', 'orderStatusAble.status', 'media'];
+
+    public function query(array $filters = []): Builder {
+        return Food::with(self::DEFAULT_WITH)->when(/* filters */);
+    }
+}
+```
+
+- Eloquent queries ONLY in Repository
+- Define `DEFAULT_WITH` constant — match what Resource needs
+- Return `Builder` for lists; Service handles pagination
+
+## Service
+
+```php
+class FoodService implements FoodServiceInterface {
+    public function __construct(private FoodRepositoryInterface $repo) {}
+
+    public function list(array $filters): LengthAwarePaginator {
+        $perPage = max(1, min(100, (int) ($filters['per_page'] ?? 10)));
+        return $this->repo->query($filters)->paginate($perPage);
+    }
+}
+```
+
+- DB transactions in Service, not Controller
+- Never duplicate logic — extract shared methods/traits
+- Depend on interfaces, not concrete classes
+
+## N+1 Prevention
+
+```php
+// ✅ Repository eager loads
+Food::with(['mainKey', 'orderStatusAble.status', 'media']);
+
+// ✅ Service adds dynamic relations
+$model->loadMissing(['userPermissions', 'role.permissions']);
+
+// ❌ Never access unloaded relations in Resource loops
+```
+
+## SOLID
+
+- **S**: One responsibility per class
+- **O**: Extend via new implementations, not modifying existing controllers
+- **L**: Implementations honor interface contracts
+- **I**: Small entity-focused interfaces
+- **D**: Inject interfaces; bind in AppServiceProvider

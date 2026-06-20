@@ -2,37 +2,30 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ApiResponseException;
 use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Hall\AddServiceRequest;
+use App\Http\Requests\Hall\UpdateServiceRequest;
 use App\Http\Requests\Service\AddMainKeyRequest;
 use App\Http\Requests\Service\UpdateMainKeyRequest;
 use App\Http\Resources\App\MainKeyResource;
-use App\Http\Resources\Services\ServicesResource;
-use App\Services\Auth\AuthService;
 use App\Http\Resources\Hall\ServiceResource;
-use App\Services\Service\ServiceServiceInterface;
-use App\Services\ServiceProvider\ServiceProviderServiceInterface;
-use App\Services\User\UserServiceInterface;
+use App\Services\Auth\AuthService;
+use App\Services\Service\Interface\ServiceServiceInterface;
+use App\Services\User\Interface\UserServiceInterface;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ServiceController extends Controller
 {
-    private $userService;
-    private $authService;
-    private $serviceService;
-    private $serviceProviderService;
-    private $handler;
-    public function __construct(Handler $handler,UserServiceInterface $userService,
-    ServiceProviderServiceInterface $serviceProviderService,
-    AuthService $authService, ServiceServiceInterface $serviceService)
-    {
-        $this->handler = $handler;
-        $this->userService = $userService;
-        $this->authService=$authService;
-        $this->serviceService=$serviceService;
-        $this->serviceProviderService=$serviceProviderService;
-    }
+    public function __construct(
+        private Handler $handler,
+        private UserServiceInterface $userService,
+        private AuthService $authService,
+        private ServiceServiceInterface $serviceService,
+    ) {}
     public function getServiceForServiceProvider($serviceProviderId=null)
     {
         try {
@@ -95,7 +88,7 @@ class ServiceController extends Controller
     public function getDetailsOfService($serviceId)
     {   
         try {
-            $service = $this->serviceProviderService->findService($serviceId);
+            $service = $this->serviceService->findService($serviceId);
             $service->load(['orderStatusAble.status', 'serviceable','media']);
 
             $canViewAll = false;
@@ -108,7 +101,7 @@ class ServiceController extends Controller
             // Check if Provider (Owner of the service)
             elseif ($user && $user->is_provider && $user->userable) {
                 $provider = $user->userable;
-                $checkService = $this->serviceProviderService->checkServiceable($service, $provider);
+                $checkService = $this->serviceService->checkServiceable($service, $provider);
                 if ($checkService) {
                     $canViewAll = true;
                 }
@@ -124,6 +117,66 @@ class ServiceController extends Controller
             return new ServiceResource($service);
         } catch (\Exception $e) {
             return response()->json(['message' => $e->getMessage()], 400);
+        }
+    }
+
+    public function addService(AddServiceRequest $request, $serviceProviderId = null)
+    {
+        try {
+            $services = $this->serviceService->addService(
+                $request->validated(),
+                $request,
+                $serviceProviderId
+            );
+
+            return $this->handler->successResponse(
+                ['services' => new ServiceResource($services)],
+                true,
+                'success add service',
+                201
+            );
+        } catch (ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
+        }
+    }
+
+    public function updateService(UpdateServiceRequest $request, $serviceId)
+    {
+        try {
+            $service = $this->serviceService->updateServiceFromRequest(
+                $request->validated(),
+                $request,
+                $serviceId
+            );
+
+            return $this->handler->successResponse(
+                ['service' => new ServiceResource($service)],
+                true,
+                'success update service',
+                201
+            );
+        } catch (ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
+        }
+    }
+
+    public function deleteService($serviceId)
+    {
+        try {
+            $this->serviceService->deleteServiceById($serviceId);
+
+            return $this->handler->successResponse(
+                null,
+                true,
+                'success delete service',
+                200
+            );
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
     }
 

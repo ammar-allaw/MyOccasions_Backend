@@ -43,12 +43,15 @@ class UserResource extends JsonResource
                 'userable_type' => $this->userable_type,
 
                 'userable' => $this->formatUserableForOwner($this->userable->makeHidden('media')),
-                'images' => $this->userable->getMedia('service_provider_image')->map(function ($media) {
-                    return [
-                        'id' => $media->id,
-                        'url' => url('storage/' . $media->id . '/' . $media->file_name),
-                    ];
-                })->toArray(),
+                'images' => $this->formatProfileImages(),
+                'cover_images' => $this->when(
+                    $this->shouldIncludeCoverMedia(),
+                    fn () => $this->formatCoverImages()
+                ),
+                'youtube_link' => $this->when(
+                    $this->shouldIncludeCoverMedia(),
+                    fn () => $this->formatYoutubeLink()
+                ),
                 'order_status' => $this->getOrderStatus(),
                 'types' => $this->userable_type === 'App\Models\ServiceProvider' ? $this->userable->types->map(function ($type) {
                     return [
@@ -88,12 +91,15 @@ class UserResource extends JsonResource
                 'userable_id' => $this->userable_id,
                 'userable_type' => $this->userable_type,
                 'userable' => $this->formatUserableByLocale($this->userable->makeHidden('media'), $locale),
-                'images' => $this->userable->getMedia('service_provider_image')->map(function ($media) {
-                    return [
-                        'id' => $media->id,
-                        'url' => url('storage/' . $media->id . '/' . $media->file_name),
-                    ];
-                })->toArray(),
+                'images' => $this->formatProfileImages(),
+                'cover_images' => $this->when(
+                    $this->shouldIncludeCoverMedia(),
+                    fn () => $this->formatCoverImages()
+                ),
+                'youtube_link' => $this->when(
+                    $this->shouldIncludeCoverMedia(),
+                    fn () => $this->formatYoutubeLink()
+                ),
                 'models' => $this->getModelsInfo(),
             ];
 
@@ -252,5 +258,65 @@ class UserResource extends JsonResource
             }
         }
         return null;
+    }
+
+    private function shouldIncludeCoverMedia(): bool
+    {
+        if ($this->userable_type !== 'App\Models\ServiceProvider' || ! $this->userable || ! $this->role) {
+            return false;
+        }
+
+        return in_array(strtolower(trim($this->role->name_en ?? '')), [
+            'photographers',
+            'aradas',
+            'singers',
+            'banquet coordinators',
+        ], true);
+    }
+
+    private function formatProfileImages(): array
+    {
+        if (! $this->userable) {
+            return [];
+        }
+
+        return $this->userable->getMedia('service_provider_image')->map(function ($media) {
+            return [
+                'id' => $media->id,
+                'url' => url('storage/' . $media->id . '/' . $media->file_name),
+            ];
+        })->toArray();
+    }
+
+    private function formatCoverImages(): array
+    {
+        if (! $this->userable) {
+            return [];
+        }
+
+        return $this->userable->getMedia('cover_image_service_provider')->map(function ($media) {
+            return [
+                'id' => $media->id,
+                'url' => url('storage/' . $media->id . '/' . $media->file_name),
+            ];
+        })->toArray();
+    }
+
+    private function formatYoutubeLink(): ?array
+    {
+        if (! $this->userable) {
+            return null;
+        }
+
+        $media = $this->userable->getMedia('service_provider_link_youtube')->first();
+
+        if (! $media) {
+            return null;
+        }
+
+        return [
+            'id' => $media->id,
+            'url' => $media->youtube_link,
+        ];
     }
 }

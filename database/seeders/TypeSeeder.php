@@ -15,10 +15,12 @@ class TypeSeeder extends Seeder
     {
         $status1=Type::create([
             'name'=>'افراح',
+            'role_id'=>3,
             'name_en'=>"weddings"
         ]);
         $status2=Type::create([
             'name'=>'تماسي',
+            'role_id'=>3,
             'name_en'=>"condolences",
         ]);
         

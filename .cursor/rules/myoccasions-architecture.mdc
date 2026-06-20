@@ -1,0 +1,49 @@
+---
+description: MyOccasions project architecture, layers, and folder structure
+alwaysApply: true
+---
+
+# MyOccasions Architecture
+
+Laravel REST API — occasions marketplace connecting Clients with Service Providers (halls, restaurants, photographers, etc.).
+
+## Request Flow
+
+```
+Route → Controller → Service → Repository → Model
+           ↓            ↓
+      FormRequest    Resource
+```
+
+## Target Folder Structure (use for all new/refactored code)
+
+```
+app/Repositories/{ModelName}/Interface/{ModelName}RepositoryInterface.php
+app/Repositories/{ModelName}/Implementation/{ModelName}Repository.php
+app/Services/{ModelName}/Interface/{ModelName}ServiceInterface.php
+app/Services/{ModelName}/Implementation/{ModelName}Service.php
+app/Http/Resources/{Entity}/{Entity}Resource.php
+app/Http/Requests/{Entity}/{Action}{Entity}Request.php
+```
+
+Legacy flat repos/services (interface + impl at same level) → migrate when touched.
+
+## Layer Rules
+
+- **Controller**: HTTP only. Call Service, return Handler + Resource. No Eloquent.
+- **Service**: Business logic, transactions, auth checks. Inject Repository interfaces.
+- **Repository**: All queries + eager loads. No business rules.
+- **Resource**: JSON shape only. No DB calls.
+- **Bind** every new interface in `AppServiceProvider`.
+
+## Domain Essentials
+
+- `User` polymorphic → `Client` | `ServiceProvider`
+- `OrderStatus`: `under_review` → `accepted` | `rejected`
+- Clients see accepted content only
+- i18n via `Accept-Language: ar|en`
+- Auth guards: `auth:api`, `auth:owner`, `auth.provider.or.owner`
+
+## Adding Features Checklist
+
+Migration → Model → Repository (Interface+Impl) → Service (Interface+Impl) → FormRequest → Resource → Controller → Routes → AppServiceProvider bind
