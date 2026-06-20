@@ -4,15 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Owner\AddServiceProviderRequest;
 use App\Http\Requests\Owner\UpdateRoomStatusRequest;
 use App\Http\Requests\User\AddServiceRequest;
 use App\Http\Resources\Hall\RoomResource;
 use App\Http\Resources\User\UserResource;
 use App\Services\Auth\AuthService;
 use App\Services\Owner\OwnerService;
-use App\Services\ServiceProvider\ServiceProviderServiceInterface;
-use App\Services\User\UserServiceInterface;
+use App\Services\ServiceProvider\Interface\ServiceProviderServiceInterface;
+use App\Services\User\Interface\UserServiceInterface;
 use Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -34,51 +33,6 @@ class OwnerController extends Controller
         $this->serviceProviderService=$serviceProviderService;
         $this->ownerService=$ownerService;
         $this->authService=$authService;
-    }
-
-    //used 
-    //we used this function to add service provider by owner
-    public function addServiceProvider(AddServiceProviderRequest $request)
-    {
-        DB::beginTransaction();
-        try{   
-            $data=$request->validated();
-            $serviceProvider=$this->serviceProviderService->createServiceProvider($data);
-            $user=$this->userService->createUser($data,$serviceProvider);
-            
-            // إضافة حالة under_review للـ service provider الجديد
-            $underReviewStatus = \App\Models\Status::where('name_en', 'under_review')->first();
-            if ($underReviewStatus) {
-                \App\Models\OrderStatus::create([
-                    'orderable_id' => $serviceProvider->id,
-                    'orderable_type' => get_class($serviceProvider),
-                    'status_id' => $underReviewStatus->id,
-                    'change_description' => null,
-                    'last_modified_at' => null,
-                ]);
-            }
-
-            if(isset($data['user_type']) && !empty($data['user_type'])){
-                $this->userService->addTypesToServiceProvider($serviceProvider, $data['user_type']);
-            }
-            
-            DB::commit();
-
-            $user->load('userable.orderStatusAble.status');
-            
-            return $this->handler->successResponse(
-                ['user'=>new UserResource($user)],
-                true,
-                'success add service provider',
-                201);
-        }catch(Exception $e){
-            DB::rollBack();
-            return $this->handler->errorResponse(
-                false,
-                $e->getMessage(),
-                null
-            ,400);
-        }
     }
 
     //used 

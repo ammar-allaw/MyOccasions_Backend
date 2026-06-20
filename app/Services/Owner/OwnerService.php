@@ -6,7 +6,7 @@ use App\Models\Client;
 use App\Models\Owner;
 use App\Models\Permission;
 use App\Models\Role;
-use App\Repositories\User\UserRepositoryInterface;
+use App\Repositories\User\Interface\UserRepositoryInterface;
 use Exception;
 
 //owner service 

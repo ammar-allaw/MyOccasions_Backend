@@ -11,7 +11,7 @@ use App\Http\Requests\Auth\RegisterUserRequest;
 use App\Http\Resources\User\UserResource;
 use App\Models\User;
 use App\Services\Owner\OwnerService;
-use App\Services\User\UserServiceInterface;
+use App\Services\User\Interface\UserServiceInterface;
 use Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
