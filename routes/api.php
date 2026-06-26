@@ -25,15 +25,12 @@ $api_path='/Api';
 // require __DIR__."{$api_path}/Owner/User.php";
 // require __DIR__."{$api_path}/Application/Application.php";
 require __DIR__."{$api_path}/Auth.php";
+require __DIR__."{$api_path}/Role.php";
 require __DIR__."{$api_path}/Owner.php";
 
 require __DIR__."{$api_path}/Service.php";
-
-
-require __DIR__."{$api_path}/Hall.php";
-require __DIR__."{$api_path}/App.php";
+require __DIR__."{$api_path}/Room.php";
 require __DIR__."{$api_path}/ServiceProvider.php";
 require __DIR__."{$api_path}/Food.php";
 require __DIR__."{$api_path}/Type.php";
 require __DIR__."{$api_path}/Government.php";
-

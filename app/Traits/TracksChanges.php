@@ -35,13 +35,27 @@ trait TracksChanges
             $changes[] = "إضافة {$imageCount} صورة جديدة";
         }
 
+        if ($request->hasFile('cover_image')) {
+            $coverCount = is_array($request->file('cover_image')) ? count($request->file('cover_image')) : 1;
+            $changes[] = "تحديث {$coverCount} صورة غلاف";
+        }
+
         if (isset($data['image_id'])) {
             $idCount = is_array($data['image_id']) ? count($data['image_id']) : 1;
             $changes[] = "استبدال {$idCount} صورة";
         }
 
+        if (isset($data['cover_image_id'])) {
+            $idCount = is_array($data['cover_image_id']) ? count($data['cover_image_id']) : 1;
+            $changes[] = "تحديث {$idCount} صورة غلاف";
+        }
+
         if (isset($data['replace_all']) && $data['replace_all']) {
             $changes[] = "استبدال جميع الصور";
+        }
+
+        if (isset($data['replace_all_cover']) && $data['replace_all_cover']) {
+            $changes[] = "استبدال جميع صور الغلاف";
         }
 
         // تتبع التغييرات في المعرض واليوتيوب (للخدمات)

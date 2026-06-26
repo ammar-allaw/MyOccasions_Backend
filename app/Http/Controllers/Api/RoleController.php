@@ -9,20 +9,39 @@ use App\Http\Requests\Owner\AssignRoleToUserRequest;
 use App\Http\Requests\Owner\StoreRoleRequest;
 use App\Http\Requests\Owner\SyncRolePermissionsRequest;
 use App\Http\Requests\Owner\UpdateRoleRequest;
-use App\Services\Owner\Role\RoleServiceInterface;
+use App\Services\Owner\Role\RoleServiceInterface as OwnerRoleServiceInterface;
+use App\Services\Role\Interface\RoleServiceInterface;
 use Exception;
 
 class RoleController extends Controller
 {
     public function __construct(
         private Handler $handler,
-        private RoleServiceInterface $roleService
+        private OwnerRoleServiceInterface $ownerRoleService,
+        private RoleServiceInterface $roleService,
     ) {}
+
+    public function getRoles()
+    {
+        return $this->roleService->getBrowsableRolesForClient(auth()->user());
+    }
+
+    public function getRolesForOwner()
+    {
+        $roles = $this->ownerRoleService->listRoles();
+
+        return $this->handler->successResponse(
+            ['roles' => $roles],
+            true,
+            'success get roles service provider',
+            200
+        );
+    }
 
     public function index()
     {
         try {
-            $roles = $this->roleService->listRoles();
+            $roles = $this->ownerRoleService->listRoles();
             return $this->handler->successResponse(
                 ['roles' => $roles],
                 true,
@@ -37,7 +56,7 @@ class RoleController extends Controller
     public function store(StoreRoleRequest $request)
     {
         try {
-            $role = $this->roleService->createRole($request->validated());
+            $role = $this->ownerRoleService->createRole($request->validated());
             return $this->handler->successResponse(
                 ['role' => $role],
                 true,
@@ -52,7 +71,7 @@ class RoleController extends Controller
     public function show(int $roleId)
     {
         try {
-            $role = $this->roleService->findRole($roleId);
+            $role = $this->ownerRoleService->findRole($roleId);
             return $this->handler->successResponse(
                 ['role' => $role],
                 true,
@@ -67,7 +86,7 @@ class RoleController extends Controller
     public function update(UpdateRoleRequest $request, int $roleId)
     {
         try {
-            $role = $this->roleService->updateRole($roleId, $request->validated());
+            $role = $this->ownerRoleService->updateRole($roleId, $request->validated());
             return $this->handler->successResponse(
                 ['role' => $role],
                 true,
@@ -82,7 +101,7 @@ class RoleController extends Controller
     public function destroy(int $roleId)
     {
         try {
-            $this->roleService->deleteRole($roleId);
+            $this->ownerRoleService->deleteRole($roleId);
             return $this->handler->successResponse(null, true, 'Role deleted successfully', 200);
         } catch (Exception $e) {
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
@@ -93,8 +112,8 @@ class RoleController extends Controller
     public function assignPermission(AssignPermissionToRoleRequest $request, int $roleId)
     {
         try {
-            $this->roleService->assignPermissionToRole($roleId, $request->validated()['permission_id']);
-            $role = $this->roleService->findRole($roleId);
+            $this->ownerRoleService->assignPermissionToRole($roleId, $request->validated()['permission_id']);
+            $role = $this->ownerRoleService->findRole($roleId);
             return $this->handler->successResponse(
                 ['role' => $role],
                 true,
@@ -110,7 +129,7 @@ class RoleController extends Controller
     public function revokePermission(int $roleId, int $permissionId)
     {
         try {
-            $this->roleService->revokePermissionFromRole($roleId, $permissionId);
+            $this->ownerRoleService->revokePermissionFromRole($roleId, $permissionId);
             return $this->handler->successResponse(null, true, 'Permission revoked from role successfully', 200);
         } catch (Exception $e) {
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
@@ -121,8 +140,8 @@ class RoleController extends Controller
     public function syncPermissions(SyncRolePermissionsRequest $request, int $roleId)
     {
         try {
-            $this->roleService->syncRolePermissions($roleId, $request->validated()['permission_ids']);
-            $role = $this->roleService->findRole($roleId);
+            $this->ownerRoleService->syncRolePermissions($roleId, $request->validated()['permission_ids']);
+            $role = $this->ownerRoleService->findRole($roleId);
             return $this->handler->successResponse(
                 ['role' => $role],
                 true,
@@ -140,7 +159,7 @@ class RoleController extends Controller
         try {
             $data    = $request->validated();
             $allowed = $data['allowed'] ?? true;
-            $this->roleService->assignRoleToUser($userId, $data['role_id'], $allowed);
+            $this->ownerRoleService->assignRoleToUser($userId, $data['role_id'], $allowed);
             return $this->handler->successResponse(null, true, 'Role assigned to user successfully', 200);
         } catch (Exception $e) {
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
@@ -151,7 +170,7 @@ class RoleController extends Controller
     public function revokeRoleFromUser(int $userId, int $roleId)
     {
         try {
-            $this->roleService->revokeRoleFromUser($userId, $roleId);
+            $this->ownerRoleService->revokeRoleFromUser($userId, $roleId);
             return $this->handler->successResponse(null, true, 'Role revoked from user successfully', 200);
         } catch (Exception $e) {
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);

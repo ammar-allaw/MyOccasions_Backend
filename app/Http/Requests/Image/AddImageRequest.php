@@ -26,7 +26,14 @@ class AddImageRequest extends FormRequest
             'image.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'image_id' => 'nullable',
             'image_id.*' => 'nullable|integer|exists:media,id',
-            'replace_all' => 'nullable|boolean'
+            'replace_all' => 'nullable|boolean',
+            'cover_image' => 'nullable',
+            'cover_image.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'cover_image_id' => 'nullable',
+            'cover_image_id.*' => 'nullable|integer|exists:media,id',
+            'replace_all_cover' => 'nullable|boolean',
+            'youtube_link' => 'nullable|url',
+            'youtube_media_id' => 'nullable|integer|exists:media,id',
         ];
     }
 }

@@ -3,7 +3,7 @@
 namespace App\Services\Owner\Permission;
 
 use App\Repositories\Permission\PermissionRepositoryInterface;
-use App\Services\User\UserServiceInterface;
+use App\Services\User\Interface\UserServiceInterface;
 
 class PermissionService implements PermissionServiceInterface
 {

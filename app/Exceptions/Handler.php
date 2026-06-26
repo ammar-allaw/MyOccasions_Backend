@@ -10,6 +10,8 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Storage;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
@@ -308,6 +310,141 @@ class Handler extends ExceptionHandler
             }
 
             return $savedImages;
+        }
+
+        public function replaceMediaFileInPlace(Media $media, UploadedFile $file): Media
+        {
+            Storage::disk($media->disk)->deleteDirectory((string) $media->id);
+
+            $fileName = $file->getClientOriginalName();
+            $file->storeAs((string) $media->id, $fileName, $media->disk);
+
+            $media->update([
+                'name' => pathinfo($fileName, PATHINFO_FILENAME),
+                'file_name' => $fileName,
+                'mime_type' => $file->getMimeType(),
+                'size' => $file->getSize(),
+            ]);
+
+            return $media->fresh();
+        }
+
+        public function manageCoverImagesOnModel(
+            Model $model,
+            string $collectionName,
+            array|UploadedFile|null $images = null,
+            int $maxAllowedImages = 5,
+            bool $replaceAll = false,
+            $replaceIds = null
+        ): array {
+            $savedImages = [];
+            $images = $images ? (is_array($images) ? $images : [$images]) : [];
+            $replaceIds = $replaceIds ? (is_array($replaceIds) ? $replaceIds : [$replaceIds]) : [];
+
+            if (! empty($replaceIds) && empty($images)) {
+                foreach ($replaceIds as $id) {
+                    $oldMedia = $model->media()
+                        ->where('collection_name', $collectionName)
+                        ->where('id', $id)
+                        ->first();
+
+                    if (! $oldMedia) {
+                        throw new \Exception("Image with ID {$id} not found in collection {$collectionName}");
+                    }
+
+                    $oldMedia->delete();
+                }
+
+                return $savedImages;
+            }
+
+            if (! empty($replaceIds) && ! empty($images)) {
+                foreach ($replaceIds as $index => $id) {
+                    $oldMedia = $model->media()
+                        ->where('collection_name', $collectionName)
+                        ->where('id', $id)
+                        ->first();
+
+                    if (! $oldMedia) {
+                        throw new \Exception("Image with ID {$id} not found in collection {$collectionName}");
+                    }
+
+                    $newImage = $images[$index] ?? null;
+                    if (! $newImage instanceof UploadedFile) {
+                        throw new \Exception("A new image file is required to update media ID {$id}");
+                    }
+
+                    $savedImages[] = $this->replaceMediaFileInPlace($oldMedia, $newImage);
+                }
+
+                return $savedImages;
+            }
+
+            if ($replaceAll) {
+                $model->clearMediaCollection($collectionName);
+            }
+
+            $currentCount = $model->getMedia($collectionName)->count();
+            $totalAfterInsert = $currentCount + count($images);
+
+            if ($totalAfterInsert > $maxAllowedImages) {
+                throw new \Exception(
+                    "You can only upload a maximum of {$maxAllowedImages} images. Currently stored: {$currentCount}"
+                );
+            }
+
+            foreach ($images as $image) {
+                if ($image instanceof UploadedFile) {
+                    $savedImages[] = $model->addMedia($image)
+                        ->usingFileName($image->getClientOriginalName())
+                        ->toMediaCollection($collectionName);
+                }
+            }
+
+            return $savedImages;
+        }
+
+        public function upsertYoutubeLinkOnModel(
+            Model $model,
+            string $collectionName,
+            string $youtubeLink,
+            ?int $mediaId = null
+        ): Media {
+            if ($mediaId) {
+                $media = $model->media()
+                    ->where('id', $mediaId)
+                    ->where('collection_name', $collectionName)
+                    ->first();
+
+                if (! $media) {
+                    throw new \Exception("YouTube media with ID {$mediaId} not found in collection {$collectionName}");
+                }
+
+                $media->update(['youtube_link' => $youtubeLink]);
+
+                return $media->fresh();
+            }
+
+            $existing = $model->getMedia($collectionName)->first();
+            if ($existing) {
+                $existing->update(['youtube_link' => $youtubeLink]);
+
+                return $existing->fresh();
+            }
+
+            return $model->media()->create([
+                'collection_name' => $collectionName,
+                'name' => 'youtube_link',
+                'file_name' => 'youtube_link',
+                'disk' => 'public',
+                'size' => 0,
+                'manipulations' => [],
+                'custom_properties' => [],
+                'generated_conversions' => [],
+                'responsive_images' => [],
+                'mime_type' => 'text/url',
+                'youtube_link' => $youtubeLink,
+            ]);
         }
     }
     

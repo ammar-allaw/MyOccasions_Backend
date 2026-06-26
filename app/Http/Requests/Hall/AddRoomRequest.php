@@ -40,7 +40,7 @@ class AddRoomRequest extends FormRequest
             ],
             'description_en' => 'nullable|string|min:10|max:500',
 
-            'rent_price' => 'required|integer|min:0',
+            'rent_price' => 'nullable|integer|min:0',
             'image.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', 
             'capacity' => 'required|integer|min:10',
         ];

@@ -2,61 +2,64 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Exceptions\ApiResponseException;
 use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\AddImageForServiceProvider;
+use App\Http\Requests\Owner\AddServiceProviderRequest;
 use App\Http\Requests\Image\AddImageRequest;
 use App\Http\Requests\ServiceProvider\UpdateServiceProviderRequest;
 use App\Http\Resources\Image\GetImageUrlResource;
 use App\Http\Resources\User\UserResource;
-use App\Models\ServiceProvider;
-use App\Models\Type;
 use App\Services\Auth\AuthService;
-use App\Services\ServiceProvider\ServiceProviderServiceInterface;
-use App\Services\User\UserServiceInterface;
-use App\Traits\TracksChanges;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Services\User\Interface\UserServiceInterface;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 //this controller for service provider بشكل عام 
 class ServiceProviderController extends Controller
 {
-    use TracksChanges;
-    
     public $handler;
-    private $serviceProviderService;
     private $authService;
     private $userService;
-    public function __construct(Handler $handler,ServiceProviderServiceInterface $serviceProviderService
-    ,AuthService $authService
-    ,UserServiceInterface $userService){
-        $this->handler=$handler;
-        $this->serviceProviderService=$serviceProviderService;
-        $this->authService=$authService;
-        $this->userService=$userService;
+    public function __construct(Handler $handler, AuthService $authService, UserServiceInterface $userService)
+    {
+        $this->handler = $handler;
+        $this->authService = $authService;
+        $this->userService = $userService;
+    }
+
+    public function addServiceProvider(AddServiceProviderRequest $request)
+    {
+        try {
+            $data = $request->validated();
+            $user = $this->userService->addServiceProviderByOwner($data);
+
+            return $this->handler->successResponse(
+                ['user' => new UserResource($user)],
+                true,
+                'success add service provider',
+                201
+            );
+        } catch (ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(
+                false,
+                $e->getMessage(),
+                null,
+                400
+            );
+        }
     }
 
     public function getServiceProviderDetails($userId=null)
     {
         try {
-
-            $user = $this->authService->authUser();
-            if ($user && $user->is_provider == true) {
-                $user->load('userable');
-            } else {
-                if ((Auth::guard('owner')->check() || 
-                    (Auth::guard('api')->check() && Auth::guard('api')->user()->is_provider == false))
-                    && $userId != null) {
-                    $user = $this->userService->findUserById($userId);
-                    $user->load('userable');
-                } else {
-                    return $this->handler->errorResponse(false, 'Unauthorized', [], 401);
-                }
-            }
-
-            $user->loadMissing(['role.permissions', 'userPermissions']);
+            $user = $this->userService->getServiceProviderDetails(
+                $this->authService->authUser(),
+                $userId
+            );
 
             return $this->handler->successResponse(
                 ['serviceProvider' => new UserResource($user)],
@@ -64,7 +67,9 @@ class ServiceProviderController extends Controller
                 'success get service provider details',
                 200
             );
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        } catch (ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (ModelNotFoundException $e) {
             return $this->handler->errorResponse(false, 'Service provider not found', [], 404);
         }
     }
@@ -73,251 +78,104 @@ class ServiceProviderController extends Controller
     public function addImageForServiceProvider(AddImageRequest $request,$userId=null)
     {
         $data=$request->validated();
-        if($userId!=null && Auth::guard('owner')->check())
-        {
-            try {
-                $user=$this->userService->findUserById($userId);
-            } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-                return $this->handler->errorResponse(false, 'User not found', [], 404);
-            }
-
-            if($user->role->name_en==='halls')
-            {
-                $maxImages=3;
-                
-            }
-            else{
-                $maxImages=1;
-            }
-        }else{
-            $user=$this->authService->authUser();
-            if($user->role->name_en==='halls')
-            {
-                $maxImages=2;
-            }
-            else{
-                $maxImages=1;
-            }
-        }
-        $serviceProvider=$user->userable;
-        
-        DB::beginTransaction();
         try {
-            // للتأكد من استلام الصور بشكل صحيح
-            $images = $this->handler->manageImagesOnModel(
-                $serviceProvider,
-                'service_provider_image',
-                $request->file('image'),
-                $maxImages,
-                $data['replace_all'] ?? false,
-                $data['image_id'] ?? null
+            $result = $this->userService->addImageForServiceProvider(
+                $data,
+                $request,
+                $userId
             );
 
-            // تحديث حالة الصالة إلى under_review عند إضافة أو تعديل الصور
-            $underReviewStatus = \App\Models\Status::where('name_en', 'under_review')->first();
-            if ($underReviewStatus) {
-                $orderStatus = $serviceProvider->orderStatusAble;
-                if ($orderStatus) {
-                    $orderStatus->update([
-                        'status_id' => $underReviewStatus->id,
-                        'change_description' => 'Service provider images updated',
-                        'last_modified_at' => now(),
-                    ]);
-                } else {
-                    \App\Models\OrderStatus::create([
-                        'orderable_id' => $serviceProvider->id,
-                        'orderable_type' => get_class($serviceProvider),
-                        'status_id' => $underReviewStatus->id,
-                        'change_description' => 'Service provider images updated',
-                        'last_modified_at' => now(),
-                    ]);
-                }
+            $responseData = [
+                'images' => GetImageUrlResource::collection($result['images'] ?? []),
+            ];
+            if (! empty($result['cover_images'])) {
+                $responseData['cover_images'] = GetImageUrlResource::collection($result['cover_images']);
+            }
+            if (! empty($result['youtube'])) {
+                $responseData['youtube_link'] = [
+                    'id' => $result['youtube']->id,
+                    'url' => $result['youtube']->youtube_link,
+                ];
             }
 
-            DB::commit();
             return $this->handler->successResponse(
-                        ['images'=>GetImageUrlResource::collection($images)],
-                        true,
-                        'success add image for service provider',
-                        201);
-        } catch (\Exception $e) {
-            DB::rollBack();
+                $responseData,
+                true,
+                'success add image for service provider',
+                201);
+        } catch (ModelNotFoundException $e) {
+            return $this->handler->errorResponse(false, 'User not found', [], 404);
+        } catch (ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
             return $this->handler->errorResponse(false, $e->getMessage(), [], 400);
         }
-
     }
 
     public function updateServiceProvider(UpdateServiceProviderRequest $request, $serviceProviderId=null)
     {
         $data=$request->validated();
-        $isOwner = Auth::guard('owner')->check();
-        // الحصول على User object
-        if($serviceProviderId != null &&  $isOwner)
-        {
-            $user = $this->userService->findServiceProviderById($serviceProviderId);
-        } else {
-            $user = $this->authService->authUser();
-        }
-        
-        // تحديث ServiceProvider والحصول على User محدّث
-        $serviceProvider = $user->userable;
-        $serviceProvider->load('orderStatusAble');
-
-        DB::beginTransaction();
         try {
-            // معالجة status_id للـ owner فقط
-            if (isset($data['status_id'])) {
-                if (!$isOwner) {
-                    DB::rollBack();
-                    return $this->handler->errorResponse(
-                        false,
-                        'Only owner can update service provider status',
-                        null,
-                        403
-                    );
-                }
-                
-                if ($serviceProvider->orderStatusAble) {
-                    $serviceProvider->orderStatusAble->status_id = $data['status_id'];
-                    
-                    // إضافة rejection_reason إذا كانت الحالة rejected (status_id = 2)
-                    if ($data['status_id'] == 2 && isset($data['rejection_reason'])) {
-                        $serviceProvider->orderStatusAble->rejection_reason = $data['rejection_reason'];
-                    } else {
-                        $serviceProvider->orderStatusAble->rejection_reason = null;
-                    }
-                    
-                    $serviceProvider->orderStatusAble->save();
-                }
-            }
-            
-            // تتبع التغييرات للـ hall فقط (ليس للـ owner)
-            if (!$isOwner) {
-                $originalServiceProvider = $this->getOriginalModel(ServiceProvider::class, $serviceProvider->id);
-                $this->trackChangesAndUpdateStatus($originalServiceProvider, $data, $request, [
-                    'name' => 'الاسم',
-                    'name_en' => 'الاسم الإنجليزي',
-                    'description' => 'الوصف',
-                    'description_en' => 'الوصف الإنجليزي',
-                    'location' => 'الموقع',
-                    'location_en' => 'الموقع الإنجليزي',
-                    'address_url' => 'رابط الموقع',
-                ]);
-            }
+            $updatedUser = $this->userService->updateServiceProviderFromRequest(
+                $data,
+                $request,
+                $serviceProviderId
+            );
 
-            if (isset($data['type_id']) || isset($data['delete_type_id'])) {
-                if (!$isOwner) {
-                    DB::rollBack();
-                    return $this->handler->errorResponse(
-                        false,
-                        'Only owner can update service provider types',
-                        null,
-                        403
-                    );
-                }
-
-                if (isset($data['type_id'])) {
-                    $typeIds = is_array($data['type_id']) ? $data['type_id'] : [$data['type_id']];
-                    foreach ($typeIds as $typeId) {
-                        if (!$this->typeBelongsToProviderRole($serviceProvider, $typeId)) {
-                            DB::rollBack();
-                            return $this->handler->errorResponse(
-                                false,
-                                'Type does not belong to this service provider role',
-                                null,
-                                422
-                            );
-                        }
-                    }
-                    $this->userService->addTypesToServiceProvider($serviceProvider, $typeIds);
-                }
-
-                if (isset($data['delete_type_id'])) {
-                    $deleteTypeIds = is_array($data['delete_type_id']) ? $data['delete_type_id'] : [$data['delete_type_id']];
-                    foreach ($deleteTypeIds as $typeId) {
-                        if (!$this->typeBelongsToProviderRole($serviceProvider, $typeId)) {
-                            DB::rollBack();
-                            return $this->handler->errorResponse(
-                                false,
-                                'Type does not belong to this service provider role',
-                                null,
-                                422
-                            );
-                        }
-                    }
-                    $this->userService->removeTypesFromServiceProvider($serviceProvider, $deleteTypeIds);
-                }
-            }
-            
-            $updatedUser = $this->userService->updateServiceProvider($serviceProvider, $data);
-            $updatedUser->load('userable.orderStatusAble.status');
-            
-            // إدارة الصور
-            if ($request->hasFile('image') || isset($data['image_id'])) {
-                if($user->role->name_en==='halls')
-                {
-                    $maxImages=2;
-                }
-                else{
-                    $maxImages=1;
-                }
-                $this->handler->manageImagesOnModel(
-                    $serviceProvider,
-                    'service_provider_image',
-                    $request->file('image'),
-                    $maxImages,
-                    $data['replace_all'] ?? false,
-                    $data['image_id'] ?? null
-                );
-                
-                // تحديث حالة الصالة إلى under_review عند إضافة أو تعديل الصور
-                $underReviewStatus = \App\Models\Status::where('name_en', 'under_review')->first();
-                if ($underReviewStatus) {
-                    $orderStatus = $serviceProvider->orderStatusAble;
-                    if ($orderStatus) {
-                        $orderStatus->update([
-                            'status_id' => $underReviewStatus->id,
-                            'change_description' => 'Service provider images updated',
-                            'last_modified_at' => now(),
-                        ]);
-                    } else {
-                        \App\Models\OrderStatus::create([
-                            'orderable_id' => $serviceProvider->id,
-                            'orderable_type' => get_class($serviceProvider),
-                            'status_id' => $underReviewStatus->id,
-                            'change_description' => 'Service provider images updated',
-                            'last_modified_at' => now(),
-                        ]);
-                    }
-                }
-                
-                $updatedUser->refresh();
-            }
-
-            DB::commit();
             return $this->handler->successResponse(
                 ['serviceProvider' => new UserResource($updatedUser)],
                 true,
                 'success update service provider',
                 200
             );
-        } catch (\Exception $e) {
-            DB::rollBack();
+        } catch (ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
     }
 
-    private function typeBelongsToProviderRole(ServiceProvider $serviceProvider, int $typeId): bool
+    public function getServiceProvidersByRoleId($roleId)
     {
-        $providerRoleId = $serviceProvider->user?->role_id;
+        return $this->userService->getServiceProvidersByRoleIdForClient(auth()->user(), $roleId);
+    }
 
-        if (!$providerRoleId) {
-            return false;
+    public function getServiceProvidersByRoleIdForOwner($roleId = null)
+    {
+        if ($roleId) {
+            $role = $this->authService->findRoleById($roleId);
+            $collection = $this->userService->getUserByRoleIdForOwner($role);
+        } else {
+            $collection = $this->userService->getAllUser();
         }
 
-        return Type::where('id', $typeId)
-            ->where('role_id', $providerRoleId)
-            ->exists();
+        $collection = $collection->sortByDesc('id');
+
+        $perPage = request()->get('per_page', 10);
+        $page = request()->get('page', 1);
+        $offset = ($page - 1) * $perPage;
+        $paginated = new LengthAwarePaginator(
+            $collection->slice($offset, $perPage)->values(),
+            $collection->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        return $this->handler->successResponse(
+            [
+                'serviceProviders' => UserResource::collection($paginated),
+                'pagination' => [
+                    'current_page' => $paginated->currentPage(),
+                    'last_page' => $paginated->lastPage(),
+                    'per_page' => $paginated->perPage(),
+                    'total' => $paginated->total(),
+                ],
+            ],
+            true,
+            'success get serviceProviders',
+            200
+        );
     }
 
 }

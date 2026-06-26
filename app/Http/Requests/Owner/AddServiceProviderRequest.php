@@ -21,6 +21,10 @@ class AddServiceProviderRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->mergeNormalizedSyrianPhoneNumber();
+
+        if ($this->has('user_type') && ! is_array($this->user_type)) {
+            $this->merge(['user_type' => [$this->user_type]]);
+        }
     }
 
     /**
@@ -48,10 +52,23 @@ class AddServiceProviderRequest extends FormRequest
             'address_url'=>'nullable|string|url',
             'password'=>'required|string|min:9|max:50',
             'image'=>'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'user_type' => 'nullable|array', 
-            'user_type.*'=>'nullable',
+            'user_type' => 'nullable|array',
+            'user_type.*' => [
+                'required',
+                'integer',
+                Rule::exists('types', 'id')->where(function ($query) {
+                    return $query->where('role_id', $this->input('role_id'));
+                }),
+            ],
             'region_id'=>'nullable|exists:regions,id',
             'government_id'=>'required|exists:governments,id',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'user_type.*.exists' => 'The selected user type does not belong to the selected role.',
         ];
     }
 }
