@@ -205,6 +205,17 @@ class UserService implements UserServiceInterface
             }
 
             if (isset($data['user_type']) && ! empty($data['user_type'])) {
+                foreach ($data['user_type'] as $typeId) {
+                    if (! $this->userRepo->typeBelongsToProviderRole($serviceProvider, (int) $typeId)) {
+                        DB::rollBack();
+                        throw new ApiResponseException(
+                            'Type does not belong to this service provider role',
+                            422,
+                            null
+                        );
+                    }
+                }
+
                 $this->addTypesToServiceProvider($serviceProvider, $data['user_type']);
             }
 
@@ -532,7 +543,7 @@ class UserService implements UserServiceInterface
     private function getMaxProfileImages(User $user, bool $isOwner): int
     {
         if ($user->role->name_en === 'halls') {
-            return $isOwner ? 3 : 2;
+            return 3;
         }
 
         return 1;

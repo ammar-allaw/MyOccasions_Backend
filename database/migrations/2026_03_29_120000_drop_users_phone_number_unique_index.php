@@ -36,7 +36,14 @@ return new class extends Migration
             ->where('index_name', 'users_phone_number_unique')
             ->exists();
 
-        if (!$indexExists) {
+        $hasDuplicatePhoneNumbers = DB::table('users')
+            ->select('phone_number')
+            ->whereNotNull('phone_number')
+            ->groupBy('phone_number')
+            ->havingRaw('COUNT(*) > 1')
+            ->exists();
+
+        if (!$indexExists && !$hasDuplicatePhoneNumbers) {
             Schema::table('users', function (Blueprint $table) {
                 $table->unique('phone_number');
             });

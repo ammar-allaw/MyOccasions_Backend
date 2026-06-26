@@ -41,7 +41,7 @@ class AddServiceRequest extends FormRequest
             ],
             'description_en' => 'nullable|string|min:10|max:500',
 
-            'price' =>'required|integer|min:0',
+            'price' =>'nullable|integer|min:0',
             'room_id' => 'nullable|array',
             'room_id.*' => ['integer', new RoomBelongsToHall],
             'image' => 'required|array',

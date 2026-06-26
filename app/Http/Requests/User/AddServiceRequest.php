@@ -26,7 +26,7 @@ class AddServiceRequest extends FormRequest
             'description'=>'nullable|string|min:10|max:500',
             'name_ar'=>'required|string',
             'description_ar'=>'nullable|string|min:10',
-            'price'=>'required|integer|min:0',
+            'price'=>'nullable|integer|min:0',
             'image.*' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', 
         ];
     }
