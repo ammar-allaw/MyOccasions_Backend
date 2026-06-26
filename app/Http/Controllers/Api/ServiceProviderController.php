@@ -41,6 +41,8 @@ class ServiceProviderController extends Controller
                 'success add service provider',
                 201
             );
+        } catch (ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
         } catch (Exception $e) {
             return $this->handler->errorResponse(
                 false,
