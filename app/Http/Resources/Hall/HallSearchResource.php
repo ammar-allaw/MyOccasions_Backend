@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Hall;
 
+use App\Http\Resources\Concerns\FormatsServiceProviderContact;
 use App\Http\Resources\Image\GetImageUrlResource;
 use App\Http\Resources\Type\TypeResource;
 use Illuminate\Http\Request;
@@ -9,6 +10,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class HallSearchResource extends JsonResource
 {
+    use FormatsServiceProviderContact;
+
     /**
      * Transform the resource into an array.
      *
@@ -88,6 +91,7 @@ class HallSearchResource extends JsonResource
         
         return [
             'id' => $user->id,
+            ...$this->serviceProviderContactFields($serviceProvider, $user),
             'hall_name' => $hallName,
             'types' => $serviceProvider && $serviceProvider->relationLoaded('types')
                 ? TypeResource::collection($serviceProvider->types)

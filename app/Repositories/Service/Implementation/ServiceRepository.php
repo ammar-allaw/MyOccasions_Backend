@@ -39,7 +39,7 @@ class ServiceRepository implements ServiceRepositoryInterface
                     $mainKeyQuery->where('main_keys.id', $filters['main_key_id']);
                 }
             })
-            ->with(['media', 'mainKeys', 'orderStatusAble.status']);
+            ->with(['media', 'mainKeys', 'orderStatusAble.status', 'serviceable.user']);
 
         if (isset($filters['service_min_price'])) {
             $query->where('price', '>=', $filters['service_min_price']);

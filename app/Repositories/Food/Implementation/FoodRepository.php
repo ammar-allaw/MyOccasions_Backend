@@ -7,7 +7,7 @@ use App\Repositories\Food\Interface\FoodRepositoryInterface;
 
 class FoodRepository implements FoodRepositoryInterface
 {
-    private const DEFAULT_WITH = ['mainKey', 'serviceProvider', 'orderStatusAble.status', 'media'];
+    private const DEFAULT_WITH = ['mainKey', 'serviceProvider.user', 'orderStatusAble.status', 'media'];
 
     public function all(array $filters = [])
     {

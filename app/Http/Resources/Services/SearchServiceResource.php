@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Services;
 
+use App\Http\Resources\Concerns\FormatsServiceProviderContact;
 use App\Http\Resources\Image\GetImageUrlResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -9,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 
 class SearchServiceResource extends JsonResource
 {
+    use FormatsServiceProviderContact;
+
     /**
      * Transform the resource into an array.
      *
@@ -41,6 +44,7 @@ class SearchServiceResource extends JsonResource
         if ($serviceProvider) {
             $serviceProviderData = [
                 'id' => $serviceProvider->user->id,
+                ...$this->serviceProviderContactFields($serviceProvider),
                 'name' => $locale === 'en' ? ($serviceProvider->name_en ?? $serviceProvider->name) : $serviceProvider->name,
             ];
         }

@@ -52,17 +52,6 @@ class RoomService implements RoomServiceInterface
                 ]);
             }
 
-            $underReviewStatus = Status::where('name_en', 'under_review')->first();
-            if ($underReviewStatus) {
-                \App\Models\OrderStatus::create([
-                    'orderable_id' => $room->id,
-                    'orderable_type' => get_class($room),
-                    'status_id' => $underReviewStatus->id,
-                    'change_description' => null,
-                    'last_modified_at' => null,
-                ]);
-            }
-
             $room->load('orderStatusAble');
 
             $currentImageCount = $room->getMedia('room_image')->count();
@@ -235,6 +224,7 @@ class RoomService implements RoomServiceInterface
                     'services.orderStatusAble.status',
                     'services.media',
                     'media',
+                    'user',
                     'types',
                     'government',
                     'region',
@@ -254,6 +244,7 @@ class RoomService implements RoomServiceInterface
                 'services.orderStatusAble.status',
                 'services.media',
                 'media',
+                'user',
                 'types',
                 'government',
                 'region',

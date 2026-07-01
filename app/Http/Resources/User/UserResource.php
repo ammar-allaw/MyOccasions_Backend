@@ -2,11 +2,14 @@
 
 namespace App\Http\Resources\User;
 
+use App\Http\Resources\Concerns\FormatsServiceProviderContact;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class UserResource extends JsonResource
 {
+    use FormatsServiceProviderContact;
+
     /**
      * Transform the resource into an array.
      *
@@ -36,6 +39,7 @@ class UserResource extends JsonResource
             return [
                 'id' => $this->id,
                 'phone_number' => $this->phone_number,
+                ...$this->serviceProviderContactFields($this->userable, $this->resource),
                 'role_id' => $this->role->id,
                 'role_name_ar' => $this->role->name ?? $this->role->name_en,
                 'role_name_en' => $this->role->name_en,
@@ -82,6 +86,7 @@ class UserResource extends JsonResource
             $data = [
                 'id' => $this->id,
                 'phone_number' => $this->phone_number,
+                ...$this->serviceProviderContactFields($this->userable, $this->resource),
                 'role_id' => $this->role->id,
                 // 'government_id' => $this->government_id,
                 // 'government_name' => $this->government ? ($locale === 'en' ? $this->government->name_en : $this->government->name) : null,

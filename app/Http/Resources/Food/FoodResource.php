@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Food;
 
+use App\Http\Resources\Concerns\FormatsServiceProviderContact;
 use App\Http\Resources\Image\GetImageUrlResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -9,6 +10,8 @@ use Illuminate\Support\Facades\Auth;
 
 class FoodResource extends JsonResource
 {
+    use FormatsServiceProviderContact;
+
     public function toArray(Request $request): array
     {
         $authUser = Auth::guard('owner')->user() ?? Auth::guard('api')->user();
@@ -68,6 +71,7 @@ class FoodResource extends JsonResource
                 'service_provider' => $this->whenLoaded('serviceProvider', function () {
                     return [
                         'id' => $this->serviceProvider->id,
+                        ...$this->serviceProviderContactFields($this->serviceProvider),
                         'name' => $this->serviceProvider->name,
                         'name_en' => $this->serviceProvider->name_en,
                     ];
@@ -79,6 +83,15 @@ class FoodResource extends JsonResource
             'name' => $locale === 'en' ? $this->name_en : $this->name,
             'description' => $locale === 'en' ? $this->description_en : $this->description,
             'short_description' => $locale === 'en' ? $this->short_description_en : $this->short_description,
+            'service_provider' => $this->whenLoaded('serviceProvider', function () use ($locale) {
+                return [
+                    'id' => $this->serviceProvider->id,
+                    ...$this->serviceProviderContactFields($this->serviceProvider),
+                    'name' => $locale === 'en'
+                        ? ($this->serviceProvider->name_en ?? $this->serviceProvider->name)
+                        : $this->serviceProvider->name,
+                ];
+            }),
             'main_key' => $this->whenLoaded('mainKey', function () use ($locale) {
                 return [
                     'id' => $this->mainKey->id,
