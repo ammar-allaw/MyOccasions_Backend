@@ -329,6 +329,8 @@ class UserService implements UserServiceInterface
                     'location' => 'الموقع',
                     'location_en' => 'الموقع الإنجليزي',
                     'address_url' => 'رابط الموقع',
+                    'landline_phone' => 'الرقم الأرضي',
+                    'use_landline_for_calls' => 'تفضيل الاتصال على الرقم الأرضي',
                 ]);
             }
 
@@ -375,6 +377,18 @@ class UserService implements UserServiceInterface
 
             $updatedUser = $this->updateServiceProvider($serviceProvider, $data);
             $updatedUser->load('userable.orderStatusAble.status');
+
+            if (
+                $updatedUser->userable?->use_landline_for_calls
+                && empty($updatedUser->userable?->landline_phone)
+            ) {
+                DB::rollBack();
+                throw new ApiResponseException(
+                    'Landline phone is required when landline calls are enabled',
+                    422,
+                    null
+                );
+            }
 
             if ($this->hasServiceProviderMediaChanges($request, $data)) {
                 $this->syncServiceProviderProfileMedia(

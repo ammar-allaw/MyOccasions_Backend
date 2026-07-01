@@ -26,6 +26,7 @@ class UpdateServiceProviderRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->mergeNormalizedSyrianPhoneNumber();
+        $this->mergeNormalizedSyrianPhoneNumber('landline_phone');
 
         if ($this->has('type_id') && !is_array($this->type_id)) {
             $this->merge(['type_id' => [$this->type_id]]);
@@ -60,6 +61,13 @@ class UpdateServiceProviderRequest extends FormRequest
             'location' => 'nullable|string|max:255',
             'location_en' => 'nullable|string|max:255',
             'address_url' => 'nullable|string|url|nullable',
+            'landline_phone' => [
+                'nullable',
+                'string',
+                'max:30',
+                $this->syrianLandlinePhoneRule(),
+            ],
+            'use_landline_for_calls' => 'nullable|boolean',
             'government_id' => 'nullable|exists:governments,id',
             'region_id' => 'nullable|exists:regions,id',
             
@@ -81,6 +89,13 @@ class UpdateServiceProviderRequest extends FormRequest
             'type_id.*' => 'integer|exists:types,id',
             'delete_type_id' => 'nullable|array',
             'delete_type_id.*' => 'integer|exists:types,id',
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'landline_phone.regex' => 'The landline phone must be a valid Syrian landline number.',
         ];
     }
 }

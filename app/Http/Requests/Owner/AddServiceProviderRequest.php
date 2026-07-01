@@ -21,6 +21,7 @@ class AddServiceProviderRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->mergeNormalizedSyrianPhoneNumber();
+        $this->mergeNormalizedSyrianPhoneNumber('landline_phone');
 
         if ($this->has('user_type') && ! is_array($this->user_type)) {
             $this->merge(['user_type' => [$this->user_type]]);
@@ -50,6 +51,14 @@ class AddServiceProviderRequest extends FormRequest
             'description_en'=>'nullable|string|min:5|max:500',
             'role_id'=>'required|exists:roles,id',
             'address_url'=>'nullable|string|url',
+            'landline_phone'=>[
+                'nullable',
+                'required_if:use_landline_for_calls,true,1',
+                'string',
+                'max:30',
+                $this->syrianLandlinePhoneRule(),
+            ],
+            'use_landline_for_calls'=>'nullable|boolean',
             'password'=>'required|string|min:9|max:50',
             'image'=>'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'user_type' => 'nullable|array',
@@ -69,6 +78,7 @@ class AddServiceProviderRequest extends FormRequest
     {
         return [
             'user_type.*.exists' => 'The selected user type does not belong to the selected role.',
+            'landline_phone.regex' => 'The landline phone must be a valid Syrian landline number.',
         ];
     }
 }

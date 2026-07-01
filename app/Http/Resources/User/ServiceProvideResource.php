@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\User;
 
+use App\Http\Resources\Concerns\FormatsServiceProviderContact;
 use App\Http\Resources\Hall\RoomResource;
 use App\Http\Resources\Hall\ServiceResource;
 use App\Http\Resources\Image\GetImageUrlResource;
@@ -12,6 +13,8 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class ServiceProvideResource extends JsonResource
 {
+    use FormatsServiceProviderContact;
+
     /**
      * Transform the resource into an array.
      *
@@ -49,7 +52,7 @@ class ServiceProvideResource extends JsonResource
         if ($isOwnerOrServiceProvider) {
             return [
                 'id' => $this->id,
-                'phone_number' => $this->user->phone_number ?? null,
+                ...$this->serviceProviderContactFields($this->resource),
                 'address_url' => $this->address_url ?? null,
                 'name' => $this->name,
                 'name_en' => $this->name_en,
@@ -100,7 +103,7 @@ class ServiceProvideResource extends JsonResource
         // إذا لم يكن owner أو hall، نرجع حسب اللغة
         return [
             'id' => $this->id,
-            'phone_number' => $this->user->phone_number ?? null,
+            ...$this->serviceProviderContactFields($this->resource),
             'address_url' => $this->address_url ?? null,
             'name' => $locale === 'en' ? $this->name_en : $this->name,
             'description' => $locale === 'en' ? $this->description_en : $this->description,
