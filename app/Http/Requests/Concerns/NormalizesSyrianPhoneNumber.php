@@ -52,4 +52,9 @@ trait NormalizesSyrianPhoneNumber
     {
         return 'regex:/^\+9639[0-9]{8}$/';
     }
+
+    protected function syrianLandlinePhoneRule(): string
+    {
+        return 'regex:/^(?:[1-8][0-9]{5,6}|0[1-8][0-9]{7,8})$/';
+    }
 }

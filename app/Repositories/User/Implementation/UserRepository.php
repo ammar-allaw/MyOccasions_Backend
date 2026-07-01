@@ -194,7 +194,8 @@ class UserRepository implements UserRepositoryInterface
         $userFields = array_intersect_key($data, array_flip(['phone_number', 'password']));
         $providerFields = array_intersect_key($data, array_flip([
             'name', 'name_en', 'description', 'description_en', 
-            'location', 'location_en', 'address_url', 'government_id', 'region_id'
+            'location', 'location_en', 'address_url', 'landline_phone',
+            'use_landline_for_calls', 'government_id', 'region_id'
         ]));
         
         // تحديث ServiceProvider

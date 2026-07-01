@@ -21,8 +21,14 @@ class ServiceProvider extends Model implements HasMedia
         'government_id',
         'region_id',
         'address_url',
+        'landline_phone',
+        'use_landline_for_calls',
         // 'image[]',
         
+    ];
+
+    protected $casts = [
+        'use_landline_for_calls' => 'boolean',
     ];
 
     public function rooms(){
