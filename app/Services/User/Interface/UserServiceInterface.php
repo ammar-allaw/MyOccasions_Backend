@@ -10,7 +10,7 @@ interface UserServiceInterface
 {
     //in here client and user repo and the same in service 
     //for service provider
-    public function getAllUser();
+    public function getAllUser(array $filters = []);
     // public function userable($user);
     public function findUserByPhoneNumber($phoneNumber);
     public function findUserById($id);
@@ -26,7 +26,7 @@ interface UserServiceInterface
     public function findServiceProviderWithTrashedById($serviceProviderId);
     public function forceDeleteServiceProvider($serviceProvider);
     public function updateServiceProvider($serviceProvider, array $data);
-    public function getUserByRoleIdForOwner($role);
+    public function getUserByRoleIdForOwner($role, array $filters = []);
     public function addTypesToServiceProvider($serviceProvider, $types);
     public function removeTypesFromServiceProvider($serviceProvider, $types);
     public function getServiceProviderById($serviceProviderId);
