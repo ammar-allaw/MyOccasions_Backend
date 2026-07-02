@@ -50,9 +50,9 @@ class UserRepository implements UserRepositoryInterface
         return $serviceProvider->forceDelete();
     }
 
-    public function getAllUser()
+    public function getAllUser(array $filters = [])
     {
-        return User::get();
+        return $this->applyOwnerServiceProviderFilters(User::query(), $filters)->get();
     }
 
     public function findUserByPhoneNumber($phoneNumber)
@@ -180,11 +180,25 @@ class UserRepository implements UserRepositoryInterface
             });
     }
 
-    public function getUserByRoleIdForOwner($role)
+    public function getUserByRoleIdForOwner($role, array $filters = [])
     {
-        return User::query()
-            ->where('role_id', $role->id)
-            ->get();
+        $query = User::query()
+            ->where('role_id', $role->id);
+
+        return $this->applyOwnerServiceProviderFilters($query, $filters)->get();
+    }
+
+    private function applyOwnerServiceProviderFilters(Builder $query, array $filters = []): Builder
+    {
+        if (! empty($filters['status_id'])) {
+            $query->whereHasMorph('userable', [ServiceProvider::class], function ($providerQuery) use ($filters) {
+                $providerQuery->whereHas('orderStatusAble', function ($statusQuery) use ($filters) {
+                    $statusQuery->where('status_id', (int) $filters['status_id']);
+                });
+            });
+        }
+
+        return $query;
     }
 
 
