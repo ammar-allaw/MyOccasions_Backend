@@ -15,6 +15,7 @@ class CheckOwnerAndPermissionMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
+    //not used yet @@@
     public function handle(Request $request, Closure $next,$permissions=null): Response
     {
         $owner_id = Auth::guard('owner')->user()?->id;

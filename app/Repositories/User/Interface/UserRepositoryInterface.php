@@ -4,7 +4,7 @@ namespace App\Repositories\User\Interface;
 interface UserRepositoryInterface
 {
     //in here client and user repo and the same in service 
-    public function getAllUser();
+    public function getAllUser(array $filters = []);
     public function getUserByRoleId($role, $filters = []);
     public function findUserByPhoneNumber($id);
     public function findUserById($id);
@@ -20,7 +20,7 @@ interface UserRepositoryInterface
     public function findServiceProviderWithTrashedById($serviceProviderId);
     public function forceDeleteServiceProvider($serviceProvider);
     public function updateServiceProvider($serviceProvider, array $data);
-    public function getUserByRoleIdForOwner($role);
+    public function getUserByRoleIdForOwner($role, array $filters = []);
     public function addTypesToServiceProvider($serviceProvider, $types);
     public function removeTypesFromServiceProvider($serviceProvider, $types);
 

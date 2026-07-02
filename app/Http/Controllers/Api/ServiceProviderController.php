@@ -142,11 +142,15 @@ class ServiceProviderController extends Controller
 
     public function getServiceProvidersByRoleIdForOwner($roleId = null)
     {
+        $filters = request()->validate([
+            'status_id' => 'nullable|integer|in:1,2,3',
+        ]);
+
         if ($roleId) {
             $role = $this->authService->findRoleById($roleId);
-            $collection = $this->userService->getUserByRoleIdForOwner($role);
+            $collection = $this->userService->getUserByRoleIdForOwner($role, $filters);
         } else {
-            $collection = $this->userService->getAllUser();
+            $collection = $this->userService->getAllUser($filters);
         }
 
         $collection = $collection->sortByDesc('id');

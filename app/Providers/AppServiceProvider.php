@@ -14,6 +14,8 @@ use App\Repositories\Service\Implementation\ServiceRepository;
 use App\Repositories\Service\Interface\ServiceRepositoryInterface;
 use App\Repositories\ServiceProvider\Implementation\ServiceProviderRepository;
 use App\Repositories\ServiceProvider\Interface\ServiceProviderRepositoryInterface;
+use App\Repositories\Status\Implementation\StatusRepository;
+use App\Repositories\Status\Interface\StatusRepositoryInterface;
 use App\Repositories\User\Implementation\UserRepository;
 use App\Repositories\User\Interface\UserRepositoryInterface;
 use App\Services\Food\Implementation\FoodService;
@@ -30,6 +32,8 @@ use App\Services\Service\Implementation\ServiceService;
 use App\Services\Service\Interface\ServiceServiceInterface;
 use App\Services\ServiceProvider\Implementation\ServiceProviderService;
 use App\Services\ServiceProvider\Interface\ServiceProviderServiceInterface;
+use App\Services\Status\Implementation\StatusService;
+use App\Services\Status\Interface\StatusServiceInterface;
 use App\Services\User\Implementation\UserService;
 use App\Services\User\Interface\UserServiceInterface;
 use Illuminate\Support\ServiceProvider;
@@ -49,6 +53,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ServiceProviderServiceInterface::class, ServiceProviderService::class);
         $this->app->bind(ServiceRepositoryInterface::class, ServiceRepository::class);
         $this->app->bind(ServiceServiceInterface::class, ServiceService::class);
+        $this->app->bind(StatusRepositoryInterface::class, StatusRepository::class);
+        $this->app->bind(StatusServiceInterface::class, StatusService::class);
         $this->app->bind(FoodRepositoryInterface::class, FoodRepository::class);
         $this->app->bind(FoodServiceInterface::class, FoodService::class);
 

@@ -63,9 +63,9 @@ class UserService implements UserServiceInterface
         return $user;
     }
 
-    public function getAllUser()
+    public function getAllUser(array $filters = [])
     {
-        return $this->userRepo->getAllUser();
+        return $this->userRepo->getAllUser($filters);
     }
 
 
@@ -132,9 +132,9 @@ class UserService implements UserServiceInterface
         $users->load(['userable', 'userPermissions', 'role.permissions']);
         return $users;
     }
-    public function getUserByRoleIdForOwner($role)
+    public function getUserByRoleIdForOwner($role, array $filters = [])
     {
-        $users=$this->userRepo->getUserByRoleIdForOwner($role);
+        $users=$this->userRepo->getUserByRoleIdForOwner($role, $filters);
         $users->load(['userable.orderStatusAble.status']);
         return $users;
     }
