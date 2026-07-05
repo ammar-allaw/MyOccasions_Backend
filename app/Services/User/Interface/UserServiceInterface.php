@@ -14,6 +14,7 @@ interface UserServiceInterface
     // public function userable($user);
     public function findUserByPhoneNumber($phoneNumber);
     public function findUserById($id);
+    public function getClientProfile(): User;
     public function createUser(array $data,$userType);
     public function createClient($data);
     public function updateUser($id, array $data);

@@ -66,6 +66,14 @@ class UserRepository implements UserRepositoryInterface
 
     }
 
+    public function findClientProfileByUserId(int $id)
+    {
+        return User::with(['userable.government', 'role'])
+            ->where('id', $id)
+            ->where('is_provider', false)
+            ->first();
+    }
+
 
     public function createUser(array $data)
     {

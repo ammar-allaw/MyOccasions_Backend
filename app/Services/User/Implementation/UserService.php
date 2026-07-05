@@ -83,6 +83,18 @@ class UserService implements UserServiceInterface
         // }
     }
 
+    public function getClientProfile(): User
+    {
+        $authUser = $this->authService->authUser();
+        $user = $this->userRepo->findClientProfileByUserId($authUser->id);
+
+        if (! $user || $user->userable_type !== Client::class) {
+            throw new ApiResponseException('Only clients can access this profile', 403, null);
+        }
+
+        return $user;
+    }
+
     public function getServiceProviderById($serviceProviderId)
     {
         $serviceProvider=$this->userRepo->getServiceProviderById($serviceProviderId);

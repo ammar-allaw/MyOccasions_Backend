@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\AddImageForServiceProvider;
 use App\Http\Requests\Auth\LoginOwnerRequest;
 use App\Http\Requests\Auth\LoginUserRequest;
 use App\Http\Requests\Auth\RegisterUserRequest;
+use App\Http\Resources\Auth\ClientProfileResource;
 use App\Http\Resources\User\UserResource;
 use App\Models\User;
 use App\Services\Owner\OwnerService;
@@ -100,6 +101,24 @@ class AuthController extends Controller
                     : $e->getMessage(),
                 null
             ,404);
+        }
+    }
+
+    public function profile()
+    {
+        try {
+            $user = $this->userService->getClientProfile();
+
+            return $this->handler->successResponse(
+                ['profile' => new ClientProfileResource($user)],
+                true,
+                'success get profile',
+                200
+            );
+        } catch (\App\Exceptions\ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
     }
 
