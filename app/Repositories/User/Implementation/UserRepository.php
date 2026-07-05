@@ -198,11 +198,30 @@ class UserRepository implements UserRepositoryInterface
 
     private function applyOwnerServiceProviderFilters(Builder $query, array $filters = []): Builder
     {
-        if (! empty($filters['status_id'])) {
+        if (! empty($filters['phone_number'])) {
+            $phoneNumbers = $filters['phone_number_variants'] ?? [$filters['phone_number']];
+            $query->where(function ($phoneQuery) use ($phoneNumbers) {
+                foreach ($phoneNumbers as $phoneNumber) {
+                    $phoneQuery->orWhere('phone_number', 'like', "%{$phoneNumber}%");
+                }
+            });
+        }
+
+        if (! empty($filters['status_id']) || ! empty($filters['name'])) {
             $query->whereHasMorph('userable', [ServiceProvider::class], function ($providerQuery) use ($filters) {
-                $providerQuery->whereHas('orderStatusAble', function ($statusQuery) use ($filters) {
-                    $statusQuery->where('status_id', (int) $filters['status_id']);
-                });
+                if (! empty($filters['status_id'])) {
+                    $providerQuery->whereHas('orderStatusAble', function ($statusQuery) use ($filters) {
+                        $statusQuery->where('status_id', (int) $filters['status_id']);
+                    });
+                }
+
+                if (! empty($filters['name'])) {
+                    $name = $filters['name'];
+                    $providerQuery->where(function ($nameQuery) use ($name) {
+                        $nameQuery->where('name', 'like', "%{$name}%")
+                            ->orWhere('name_en', 'like', "%{$name}%");
+                    });
+                }
             });
         }
 
