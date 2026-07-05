@@ -8,6 +8,7 @@ use App\Http\Requests\Auth\AddImageForServiceProvider;
 use App\Http\Requests\Auth\LoginOwnerRequest;
 use App\Http\Requests\Auth\LoginUserRequest;
 use App\Http\Requests\Auth\RegisterUserRequest;
+use App\Http\Resources\Auth\ClientProfileResource;
 use App\Http\Resources\User\UserResource;
 use App\Models\User;
 use App\Services\Owner\OwnerService;
@@ -67,7 +68,7 @@ class AuthController extends Controller
             if(!$user){
                 return $this->handler->errorResponse(
                     false,
-                    'User not found',
+                    $this->loginMessage('user_not_found'),
                     null,404);     
             }
             if(Hash::check($dataRequest['password'],$user->password)){
@@ -84,19 +85,40 @@ class AuthController extends Controller
                     true,
                     'success login',
                     200);
-            }else{
+            } else {
                 return $this->handler->errorResponse(
-                false,
-                'بيانات تسجيل الدخول غير صحيحة  ',
-                null
-            ,422); ;
+                    false,
+                    $this->loginMessage('invalid_credentials'),
+                    null,
+                    422
+                );
             }
         }catch(Exception $e){
             return $this->handler->errorResponse(
                 false,
-                $e->getMessage(),
+                $e->getMessage() === 'the user not found'
+                    ? $this->loginMessage('user_not_found')
+                    : $e->getMessage(),
                 null
             ,404);
+        }
+    }
+
+    public function profile()
+    {
+        try {
+            $user = $this->userService->getClientProfile();
+
+            return $this->handler->successResponse(
+                ['profile' => new ClientProfileResource($user)],
+                true,
+                'success get profile',
+                200
+            );
+        } catch (\App\Exceptions\ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
     }
 
@@ -209,6 +231,29 @@ class AuthController extends Controller
                 null
             ,400);
         }
+    }
+
+    private function loginMessage(string $key): string
+    {
+        $locale = request()->header(
+            'localization',
+            request()->header('localiztion', request()->header('Accept-Language', 'ar'))
+        );
+
+        $locale = str_starts_with(strtolower((string) $locale), 'en') ? 'en' : 'ar';
+
+        $messages = [
+            'ar' => [
+                'user_not_found' => 'المستخدم غير موجود',
+                'invalid_credentials' => 'بيانات تسجيل الدخول غير صحيحة',
+            ],
+            'en' => [
+                'user_not_found' => 'User not found',
+                'invalid_credentials' => 'Invalid credentials',
+            ],
+        ];
+
+        return $messages[$locale][$key] ?? $key;
     }
 
 }
