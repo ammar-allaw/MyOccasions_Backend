@@ -67,7 +67,7 @@ class AuthController extends Controller
             if(!$user){
                 return $this->handler->errorResponse(
                     false,
-                    'User not found',
+                    $this->loginMessage('user_not_found'),
                     null,404);     
             }
             if(Hash::check($dataRequest['password'],$user->password)){
@@ -84,17 +84,20 @@ class AuthController extends Controller
                     true,
                     'success login',
                     200);
-            }else{
+            } else {
                 return $this->handler->errorResponse(
-                false,
-                'بيانات تسجيل الدخول غير صحيحة  ',
-                null
-            ,422); ;
+                    false,
+                    $this->loginMessage('invalid_credentials'),
+                    null,
+                    422
+                );
             }
         }catch(Exception $e){
             return $this->handler->errorResponse(
                 false,
-                $e->getMessage(),
+                $e->getMessage() === 'the user not found'
+                    ? $this->loginMessage('user_not_found')
+                    : $e->getMessage(),
                 null
             ,404);
         }
@@ -209,6 +212,29 @@ class AuthController extends Controller
                 null
             ,400);
         }
+    }
+
+    private function loginMessage(string $key): string
+    {
+        $locale = request()->header(
+            'localization',
+            request()->header('localiztion', request()->header('Accept-Language', 'ar'))
+        );
+
+        $locale = str_starts_with(strtolower((string) $locale), 'en') ? 'en' : 'ar';
+
+        $messages = [
+            'ar' => [
+                'user_not_found' => 'المستخدم غير موجود',
+                'invalid_credentials' => 'بيانات تسجيل الدخول غير صحيحة',
+            ],
+            'en' => [
+                'user_not_found' => 'User not found',
+                'invalid_credentials' => 'Invalid credentials',
+            ],
+        ];
+
+        return $messages[$locale][$key] ?? $key;
     }
 
 }

@@ -256,6 +256,7 @@ class Handler extends ExceptionHandler
                 }
 
                 // التحقق من الحد الأقصى بعد الحذف
+                $model->unsetRelation('media');
                 $currentCount = $model->getMedia($collectionName)->count();
                 $totalAfterInsert = $currentCount + count($images);
 
