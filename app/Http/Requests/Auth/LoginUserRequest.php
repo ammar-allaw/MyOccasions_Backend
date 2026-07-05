@@ -34,4 +34,36 @@ class LoginUserRequest extends FormRequest
             'password'=>'required'
         ];
     }
+
+    public function messages(): array
+    {
+        $messages = [
+            'ar' => [
+                'phone_number.required' => 'رقم الهاتف مطلوب',
+                'phone_number.string' => 'رقم الهاتف يجب أن يكون نصاً',
+                'phone_number.regex' => 'صيغة رقم الهاتف غير صحيحة',
+                'phone_number.exists' => 'رقم الهاتف غير مسجل',
+                'password.required' => 'كلمة المرور مطلوبة',
+            ],
+            'en' => [
+                'phone_number.required' => 'Phone number is required',
+                'phone_number.string' => 'Phone number must be a string',
+                'phone_number.regex' => 'Phone number format is invalid',
+                'phone_number.exists' => 'Phone number is not registered',
+                'password.required' => 'Password is required',
+            ],
+        ];
+
+        return $messages[$this->locale()];
+    }
+
+    private function locale(): string
+    {
+        $locale = $this->header(
+            'localization',
+            $this->header('localiztion', $this->header('Accept-Language', 'ar'))
+        );
+
+        return str_starts_with(strtolower((string) $locale), 'en') ? 'en' : 'ar';
+    }
 }
