@@ -144,7 +144,14 @@ class ServiceProviderController extends Controller
     {
         $filters = request()->validate([
             'status_id' => 'nullable|integer|in:1,2,3',
+            'phone_number' => 'nullable|string|max:30',
+            'name' => 'nullable|string|max:255',
         ]);
+
+        if (! empty($filters['phone_number'])) {
+            $filters['phone_number'] = $this->normalizePhoneNumberFilter($filters['phone_number']);
+            $filters['phone_number_variants'] = $this->buildPhoneNumberFilterVariants($filters['phone_number']);
+        }
 
         if ($roleId) {
             $role = $this->authService->findRoleById($roleId);
@@ -180,6 +187,58 @@ class ServiceProviderController extends Controller
             'success get serviceProviders',
             200
         );
+    }
+
+    private function normalizePhoneNumberFilter(string $phoneNumber): string
+    {
+        $phoneNumber = preg_replace('/[\s\-\(\)]/', '', trim($phoneNumber));
+
+        if ($phoneNumber === '') {
+            return $phoneNumber;
+        }
+
+        if (str_starts_with($phoneNumber, '00')) {
+            $phoneNumber = '+' . substr($phoneNumber, 2);
+        }
+
+        if (str_starts_with($phoneNumber, '+9630')) {
+            return '+963' . substr($phoneNumber, 5);
+        }
+
+        if (str_starts_with($phoneNumber, '9630')) {
+            return '+963' . substr($phoneNumber, 4);
+        }
+
+        if (str_starts_with($phoneNumber, '09')) {
+            return '+963' . substr($phoneNumber, 1);
+        }
+
+        if (str_starts_with($phoneNumber, '9')) {
+            return '+963' . $phoneNumber;
+        }
+
+        if (str_starts_with($phoneNumber, '963')) {
+            return '+' . $phoneNumber;
+        }
+
+        return $phoneNumber;
+    }
+
+    private function buildPhoneNumberFilterVariants(string $phoneNumber): array
+    {
+        $variants = [$phoneNumber];
+
+        if (str_starts_with($phoneNumber, '+963')) {
+            $withoutPlus = substr($phoneNumber, 1);
+            $variants[] = $withoutPlus;
+
+            $localNumber = substr($phoneNumber, 4);
+            if ($localNumber !== '') {
+                $variants[] = '0' . $localNumber;
+            }
+        }
+
+        return array_values(array_unique(array_filter($variants)));
     }
 
 }

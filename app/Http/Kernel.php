@@ -68,6 +68,7 @@ class Kernel extends HttpKernel
         'check.auth.permissions.owner' => \App\Http\Middleware\CheckOwnerAndPermissionMiddleware::class,
         'auth.api.or.owner' => \App\Http\Middleware\AuthenticateApiOrOwner::class,
         'auth.owner' => \App\Http\Middleware\AuthenticateOwner::class,
+        'auth.client' => \App\Http\Middleware\AuthenticateClient::class,
         'auth.provider.or.owner' => \App\Http\Middleware\AuthenticateProviderOrOwner::class,
         'can.access' => \App\Http\Middleware\CanAccessMiddleware::class,
     ];
