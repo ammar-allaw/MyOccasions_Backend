@@ -2,7 +2,12 @@
 namespace App\Repositories\User\Implementation;
 
 use App\Models\Client;
+use App\Models\Food;
+use App\Models\ModelLike;
+use App\Models\ModelView;
 use App\Models\OrderStatus;
+use App\Models\Room;
+use App\Models\Service;
 use App\Models\ServiceProvider;
 use App\Models\Status;
 use App\Models\Type;
@@ -44,10 +49,90 @@ class UserRepository implements UserRepositoryInterface
     {
         return User::withTrashed()->where('is_provider',1)->where('id',$serviceProviderId)->first();
     }
+
+    public function restoreServiceProvider($serviceProvider)
+    {
+        return $serviceProvider->restore();
+    }
     
     public function forceDeleteServiceProvider($serviceProvider)
     {
         return $serviceProvider->forceDelete();
+    }
+
+    public function forceDeleteServiceProviderAggregate($serviceProvider): bool
+    {
+        $serviceProviderModel = $serviceProvider->userable;
+
+        if (! $serviceProviderModel instanceof ServiceProvider) {
+            return (bool) $serviceProvider->forceDelete();
+        }
+
+        $serviceProviderModel->loadMissing([
+            'rooms.services.mainKeys',
+            'rooms.services.orderStatusAble',
+            'rooms.orderStatusAble',
+            'services.mainKeys',
+            'services.orderStatusAble',
+            'orderStatusAble',
+        ]);
+
+        Food::where('service_provider_id', $serviceProviderModel->id)
+            ->get()
+            ->each(function (Food $food) {
+                $this->deleteContentModel($food);
+            });
+
+        $serviceProviderModel->rooms->each(function (Room $room) {
+            $room->services->each(function (Service $service) {
+                $this->deleteContentModel($service);
+            });
+
+            $this->deleteContentModel($room);
+        });
+
+        $serviceProviderModel->services->each(function (Service $service) {
+            $this->deleteContentModel($service);
+        });
+
+        $serviceProviderModel->types()->detach();
+        $this->deleteContentModel($serviceProviderModel);
+
+        return (bool) $serviceProvider->forceDelete();
+    }
+
+    private function deleteContentModel($model): void
+    {
+        if (method_exists($model, 'mainKeys')) {
+            $model->mainKeys()->detach();
+        }
+
+        if (method_exists($model, 'clearMediaCollection')) {
+            $model->media()->get()->each(function ($media) {
+                $media->delete();
+            });
+        }
+
+        $this->deleteInteractionsForModel($model);
+
+        if (method_exists($model, 'orderStatusAble')) {
+            OrderStatus::where('orderable_type', get_class($model))
+                ->where('orderable_id', $model->id)
+                ->delete();
+        }
+
+        $model->delete();
+    }
+
+    private function deleteInteractionsForModel($model): void
+    {
+        ModelLike::where('likeable_type', get_class($model))
+            ->where('likeable_id', $model->id)
+            ->delete();
+
+        ModelView::where('viewable_type', get_class($model))
+            ->where('viewable_id', $model->id)
+            ->delete();
     }
 
     public function getAllUser(array $filters = [])
