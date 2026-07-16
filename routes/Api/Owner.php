@@ -6,18 +6,6 @@ use App\Http\Controllers\Api\PermissionController;
 use App\Http\Controllers\Api\RoleController;
 use Illuminate\Support\Facades\Route;
 
-Route::controller(OwnerController::class)->prefix('owner')
-->group(function(){
-        Route::delete('/force-delete-service-provider/{serviceProviderId}','forceDeleteServiceProvider')->name('force-delete-service-provider')
-        ->middleware(['auth:owner']);
-
-        Route::get('/get-service-providers-with-trashed','getServiceProvidersWithTrashed')->name('get-service-providers-with-trashed')
-        ->middleware(['auth:owner']);
-
-        Route::delete('/soft-delete-service-provider/{serviceProviderId}','softDeleteServiceProvider')->name('soft-delete-service-provider')
-        ->middleware(['auth:owner']);
-});
-
 // ─── Roles (owner only) ───────────────────────────────────────────────────────
 Route::prefix('owner')->middleware('auth:owner')->group(function () {
 
