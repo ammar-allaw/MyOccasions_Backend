@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::controller(ServiceProviderController::class)->prefix('service-provider')
 ->group(function(){
-        Route::post('/add-image-for-service-provider/{userId?}','addImageForServiceProvider')->name('/add-image-for-service-provider')
+        Route::post('/manage-image/{userId?}','manageImageForServiceProvider')->name('/manage-image-for-service-provider')
         ->middleware(['auth.provider.or.owner']);
 
         Route::get('/get-details-of-service-provider/{userId?}','getServiceProviderDetails')->name('/get-details-of-service-provider')
@@ -16,6 +16,18 @@ Route::controller(ServiceProviderController::class)->prefix('service-provider')
 
         Route::put('/update-service-provider/{serviceProviderId?}','updateServiceProvider')->name('update-service-provider')
         ->middleware(['auth.provider.or.owner']);
+
+        Route::delete('/force-delete/{serviceProviderId}','forceDeleteServiceProvider')->name('force-delete-service-provider')
+        ->middleware(['auth:owner']);
+
+        Route::get('/get-trashed','getServiceProvidersWithTrashed')->name('get-service-providers-with-trashed')
+        ->middleware(['auth:owner']);
+
+        Route::patch('/restore/{serviceProviderId}','restoreServiceProvider')->name('restore-service-provider')
+        ->middleware(['auth:owner']);
+
+        Route::delete('/soft-delete/{serviceProviderId}','softDeleteServiceProvider')->name('soft-delete-service-provider')
+        ->middleware(['auth:owner']);
 });
 
 Route::controller(ServiceProviderController::class)->prefix('owner')->middleware('auth:owner')->group(function () {

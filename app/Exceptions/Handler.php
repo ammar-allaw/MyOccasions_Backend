@@ -447,5 +447,22 @@ class Handler extends ExceptionHandler
                 'youtube_link' => $youtubeLink,
             ]);
         }
+
+        public function deleteYoutubeLinkOnModel(
+            Model $model,
+            string $collectionName,
+            int $mediaId
+        ): void {
+            $media = $model->media()
+                ->where('id', $mediaId)
+                ->where('collection_name', $collectionName)
+                ->first();
+
+            if (! $media) {
+                throw new \Exception("YouTube media with ID {$mediaId} not found in collection {$collectionName}");
+            }
+
+            $media->delete();
+        }
     }
     

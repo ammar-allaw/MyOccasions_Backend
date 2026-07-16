@@ -121,35 +121,4 @@ class OwnerController extends Controller
     //     }
     // }
 
-    public function softDeleteServiceProvider($serviceProviderId)
-    {
-        $serviceProvider=$this->userService->findServiceProviderById($serviceProviderId);
-        $serviceProvider=$this->userService->softDeleteServiceProvider($serviceProvider);
-        return $this->handler->successResponse(
-                null,
-                true,
-                'success delete service provider',
-                200);
-    }
-
-    public function getServiceProvidersWithTrashed()
-    {
-        $serviceProviders=$this->userService->getServiceProviderWithTrashed();
-        return $this->handler->successResponse(
-                ['service_providers'=>UserResource::collection($serviceProviders)],
-                true,
-                'success get service providers with trashed',
-                200);
-    }
-
-    public function forceDeleteServiceProvider($serviceProviderId)
-    {
-        $serviceProvider=$this->userService->findServiceProviderWithTrashedById($serviceProviderId);
-        $this->userService->forceDeleteServiceProvider($serviceProvider);
-        return $this->handler->successResponse(
-                null,
-                true,
-                'success force delete service provider',
-                200);
-    }
 }

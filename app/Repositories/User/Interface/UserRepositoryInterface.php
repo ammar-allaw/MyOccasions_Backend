@@ -19,7 +19,9 @@ interface UserRepositoryInterface
     public function softDeleteServiceProvider($id);
     public function getServiceProviderWithTrashed();
     public function findServiceProviderWithTrashedById($serviceProviderId);
+    public function restoreServiceProvider($serviceProvider);
     public function forceDeleteServiceProvider($serviceProvider);
+    public function forceDeleteServiceProviderAggregate($serviceProvider): bool;
     public function updateServiceProvider($serviceProvider, array $data);
     public function getUserByRoleIdForOwner($role, array $filters = []);
     public function addTypesToServiceProvider($serviceProvider, $types);

@@ -178,9 +178,28 @@ class UserService implements UserServiceInterface
         }
         return $user;
     }
+    public function restoreServiceProvider($serviceProvider)
+    {
+        if (! $serviceProvider->trashed()) {
+            throw new ApiResponseException('the service provider is not deleted', 422, null);
+        }
+
+        return $this->userRepo->restoreServiceProvider($serviceProvider);
+    }
     public function forceDeleteServiceProvider($serviceProvider)
     {
-        return $this->userRepo->forceDeleteServiceProvider($serviceProvider);
+        DB::beginTransaction();
+        try {
+            $result = $this->userRepo->forceDeleteServiceProviderAggregate($serviceProvider);
+
+            DB::commit();
+
+            return $result;
+        } catch (Exception $e) {
+            DB::rollBack();
+
+            throw $e;
+        }
     }
 
     public function updateServiceProvider($serviceProvider, array $data)
@@ -586,7 +605,8 @@ class UserService implements UserServiceInterface
             || isset($data['image_id'])
             || $request->hasFile('cover_image')
             || isset($data['cover_image_id'])
-            || $request->filled('youtube_link');
+            || $request->filled('youtube_link')
+            || isset($data['youtube_media_id']);
     }
 
     private function syncServiceProviderProfileMedia(
@@ -632,7 +652,7 @@ class UserService implements UserServiceInterface
             );
         }
 
-        if ($request->filled('youtube_link')) {
+        if ($request->filled('youtube_link') || isset($data['youtube_media_id'])) {
             if (! $this->roleSupportsCoverMedia($user->role->name_en ?? null)) {
                 throw new ApiResponseException(
                     'YouTube link is only allowed for photographers, aradas, singers, and banquet coordinators',
@@ -641,12 +661,20 @@ class UserService implements UserServiceInterface
                 );
             }
 
-            $result['youtube'] = $this->handler->upsertYoutubeLinkOnModel(
-                $serviceProvider,
-                self::YOUTUBE_COLLECTION,
-                $request->input('youtube_link'),
-                isset($data['youtube_media_id']) ? (int) $data['youtube_media_id'] : null
-            );
+            if ($request->filled('youtube_link')) {
+                $result['youtube'] = $this->handler->upsertYoutubeLinkOnModel(
+                    $serviceProvider,
+                    self::YOUTUBE_COLLECTION,
+                    $request->input('youtube_link'),
+                    isset($data['youtube_media_id']) ? (int) $data['youtube_media_id'] : null
+                );
+            } else {
+                $this->handler->deleteYoutubeLinkOnModel(
+                    $serviceProvider,
+                    self::YOUTUBE_COLLECTION,
+                    (int) $data['youtube_media_id']
+                );
+            }
         }
 
         return $result;

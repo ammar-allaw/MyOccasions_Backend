@@ -73,9 +73,9 @@ class ServiceProviderController extends Controller
             return $this->handler->errorResponse(false, 'Service provider not found', [], 404);
         }
     }
+    
 
-
-    public function addImageForServiceProvider(AddImageRequest $request,$userId=null)
+    public function manageImageForServiceProvider(AddImageRequest $request,$userId=null)
     {
         $data=$request->validated();
         try {
@@ -133,6 +133,54 @@ class ServiceProviderController extends Controller
         } catch (Exception $e) {
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
+    }
+
+    public function softDeleteServiceProvider($serviceProviderId)
+    {
+        $serviceProvider=$this->userService->findServiceProviderById($serviceProviderId);
+        $serviceProvider=$this->userService->softDeleteServiceProvider($serviceProvider);
+        return $this->handler->successResponse(
+                null,
+                true,
+                'success delete service provider',
+                200);
+    }
+
+    public function getServiceProvidersWithTrashed()
+    {
+        $serviceProviders=$this->userService->getServiceProviderWithTrashed();
+        return $this->handler->successResponse(
+                ['service_providers'=>UserResource::collection($serviceProviders)],
+                true,
+                'success get service providers with trashed',
+                200);
+    }
+
+    public function restoreServiceProvider($serviceProviderId)
+    {
+        try {
+            $serviceProvider=$this->userService->findServiceProviderWithTrashedById($serviceProviderId);
+            $this->userService->restoreServiceProvider($serviceProvider);
+
+            return $this->handler->successResponse(
+                    null,
+                    true,
+                    'success restore service provider',
+                    200);
+        } catch (ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        }
+    }
+
+    public function forceDeleteServiceProvider($serviceProviderId)
+    {
+        $serviceProvider=$this->userService->findServiceProviderWithTrashedById($serviceProviderId);
+        $this->userService->forceDeleteServiceProvider($serviceProvider);
+        return $this->handler->successResponse(
+                null,
+                true,
+                'success force delete service provider',
+                200);
     }
 
     public function getServiceProvidersByRoleId($roleId)
