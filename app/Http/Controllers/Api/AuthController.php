@@ -71,15 +71,19 @@ class AuthController extends Controller
                     $this->loginMessage('user_not_found'),
                     null,404);     
             }
+            if ($user->is_provider) {
+                return $this->handler->errorResponse(
+                    false,
+                    $this->loginMessage('user_not_found'),
+                    null,
+                    404
+                );
+            }
             if(Hash::check($dataRequest['password'],$user->password)){
                 $user->load('role');
                 $role_name=$user->role->name_en;
                 $dive_name = $request->post('dive_name',$request->userAgent('sanctum.expiration'));
-                if($user->is_provider){
-                    $userToken=$user->createToken($dive_name, ['*'], now()->addDays(7));
-                }else {
-                    $userToken=$user->createToken($dive_name, ['*'], null);
-                }
+                $userToken=$user->createToken($dive_name, ['*'], null);
                 return $this->handler->successResponse(
                     ['user'=>new UserResource($user),'token'=>$userToken->plainTextToken],
                     true,
@@ -101,6 +105,43 @@ class AuthController extends Controller
                     : $e->getMessage(),
                 null
             ,404);
+        }
+    }
+
+    public function loginServiceProvider(LoginUserRequest $request)
+    {
+        try {
+            $dataRequest = $request->validated();
+            $user = $this->userService->findServiceProviderUserByPhoneNumber($dataRequest['phone_number']);
+
+            if (! Hash::check($dataRequest['password'], $user->password)) {
+                return $this->handler->errorResponse(
+                    false,
+                    $this->loginMessage('invalid_credentials'),
+                    null,
+                    422
+                );
+            }
+
+            $user->load('role');
+            $dive_name = $request->post('dive_name', $request->userAgent('sanctum.expiration'));
+            $userToken = $user->createToken($dive_name, ['*'], now()->addDays(7));
+
+            return $this->handler->successResponse(
+                ['user' => new UserResource($user), 'token' => $userToken->plainTextToken],
+                true,
+                'success service provider login',
+                200
+            );
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(
+                false,
+                $e->getMessage() === 'the user not found'
+                    ? $this->loginMessage('user_not_found')
+                    : $e->getMessage(),
+                null,
+                404
+            );
         }
     }
 

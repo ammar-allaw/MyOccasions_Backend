@@ -142,7 +142,23 @@ class UserRepository implements UserRepositoryInterface
 
     public function findUserByPhoneNumber($phoneNumber)
     {
-        return User::where('phone_number', $phoneNumber)->first();
+        return User::where('phone_number', $phoneNumber)
+            ->orderBy('is_provider')
+            ->first();
+    }
+
+    public function findServiceProviderUserByPhoneNumber($phoneNumber)
+    {
+        return User::where('phone_number', $phoneNumber)
+            ->where('is_provider', true)
+            ->first();
+    }
+
+    public function findUserByPhoneNumberAndRole($phoneNumber, int $roleId)
+    {
+        return User::where('phone_number', $phoneNumber)
+            ->where('role_id', $roleId)
+            ->first();
     }
 
     public function findUserById($id)
