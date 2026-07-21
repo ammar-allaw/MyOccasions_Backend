@@ -77,4 +77,24 @@ class InteractionController extends Controller
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
     }
+
+    public function stats(Request $request, string $type, int $id)
+    {
+        try {
+            $interaction = $this->interactionService->stats($type, $id, $request->user());
+
+            return $this->handler->successResponse(
+                ['interaction' => new InteractionResource($interaction)],
+                true,
+                'success get interaction stats',
+                200
+            );
+        } catch (InvalidArgumentException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 422);
+        } catch (ModelNotFoundException $e) {
+            return $this->handler->errorResponse(false, 'Interaction target not found', null, 404);
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
+        }
+    }
 }
