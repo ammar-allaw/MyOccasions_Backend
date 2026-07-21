@@ -12,4 +12,6 @@ interface InteractionServiceInterface
     public function like(string $type, int $id, User $user): array;
 
     public function unlike(string $type, int $id, User $user): array;
+
+    public function stats(string $type, int $id, User $user): array;
 }

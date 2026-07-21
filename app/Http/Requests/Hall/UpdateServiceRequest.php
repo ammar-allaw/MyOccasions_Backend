@@ -18,6 +18,33 @@ class UpdateServiceRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (! $this->has('main_key_ids')) {
+            return;
+        }
+
+        $mainKeyIds = $this->input('main_key_ids');
+
+        if ($mainKeyIds === '' || $mainKeyIds === '[]' || $mainKeyIds === null) {
+            $this->merge(['main_key_ids' => []]);
+            return;
+        }
+
+        if (is_string($mainKeyIds) && str_starts_with(trim($mainKeyIds), '[')) {
+            $decoded = json_decode($mainKeyIds, true);
+            if (is_array($decoded)) {
+                $mainKeyIds = $decoded;
+            }
+        }
+
+        if (is_array($mainKeyIds)) {
+            $this->merge([
+                'main_key_ids' => array_values(array_filter($mainKeyIds, fn ($id) => $id !== '' && $id !== null)),
+            ]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *

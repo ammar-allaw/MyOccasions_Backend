@@ -63,6 +63,21 @@ class UserService implements UserServiceInterface
         return $user;
     }
 
+    public function findServiceProviderUserByPhoneNumber($phoneNumber)
+    {
+        $user = $this->userRepo->findServiceProviderUserByPhoneNumber($phoneNumber);
+        if (! $user) {
+            throw new Exception('the user not found');
+        }
+
+        return $user;
+    }
+
+    public function findUserByPhoneNumberAndRole($phoneNumber, int $roleId)
+    {
+        return $this->userRepo->findUserByPhoneNumberAndRole($phoneNumber, $roleId);
+    }
+
     public function getAllUser(array $filters = [])
     {
         return $this->userRepo->getAllUser($filters);
@@ -224,6 +239,10 @@ class UserService implements UserServiceInterface
             $serviceProvider = $this->userRepo->createServiceProvider($data);
             $user = $this->createUser($data, $serviceProvider);
 
+            if ($data['create_client_account'] ?? false) {
+                $this->createClientAccountForServiceProvider($data);
+            }
+
             $underReviewStatus = $this->userRepo->findStatusByNameEn('under_review');
             if ($underReviewStatus) {
                 \App\Models\OrderStatus::create([
@@ -260,6 +279,42 @@ class UserService implements UserServiceInterface
 
             throw $e;
         }
+    }
+
+    private function createClientAccountForServiceProvider(array $data): ?User
+    {
+        $clientRoleId = 2;
+        $existingClientUser = $this->findUserByPhoneNumberAndRole($data['phone_number'], $clientRoleId);
+
+        if ($existingClientUser) {
+            return $existingClientUser;
+        }
+
+        $client = $this->createClient($this->buildClientDataFromServiceProvider($data));
+
+        return $this->createUser([
+            'phone_number' => $data['phone_number'],
+            'password' => $data['password'],
+        ], $client);
+    }
+
+    private function buildClientDataFromServiceProvider(array $data): array
+    {
+        if (! empty($data['client_first_name']) || ! empty($data['client_last_name'])) {
+            return [
+                'first_name' => $data['client_first_name'] ?? $data['name'],
+                'last_name' => $data['client_last_name'] ?? $data['name'],
+                'government_id' => $data['government_id'],
+            ];
+        }
+
+        $nameParts = preg_split('/\s+/', trim($data['name']), 2);
+
+        return [
+            'first_name' => $nameParts[0] ?? $data['name'],
+            'last_name' => $nameParts[1] ?? $data['name'],
+            'government_id' => $data['government_id'],
+        ];
     }
 
     public function getServiceProviderDetails($user, $userId = null): User
