@@ -7,8 +7,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Interaction\InteractionResource;
 use App\Services\Interaction\Interface\InteractionServiceInterface;
 use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use InvalidArgumentException;
 
 class InteractionController extends Controller
@@ -81,7 +83,7 @@ class InteractionController extends Controller
     public function stats(Request $request, string $type, int $id)
     {
         try {
-            $interaction = $this->interactionService->stats($type, $id, $request->user());
+            $interaction = $this->interactionService->stats($type, $id, $this->authenticatedStatsUser());
 
             return $this->handler->successResponse(
                 ['interaction' => new InteractionResource($interaction)],
@@ -91,10 +93,17 @@ class InteractionController extends Controller
             );
         } catch (InvalidArgumentException $e) {
             return $this->handler->errorResponse(false, $e->getMessage(), null, 422);
+        } catch (AuthorizationException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 403);
         } catch (ModelNotFoundException $e) {
             return $this->handler->errorResponse(false, 'Interaction target not found', null, 404);
         } catch (Exception $e) {
             return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
+    }
+
+    private function authenticatedStatsUser()
+    {
+        return Auth::guard('owner')->user() ?: Auth::guard('api')->user();
     }
 }

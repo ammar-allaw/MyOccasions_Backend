@@ -3,6 +3,7 @@
 namespace App\Services\Interaction\Interface;
 
 use App\Models\User;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 
 interface InteractionServiceInterface
@@ -13,5 +14,5 @@ interface InteractionServiceInterface
 
     public function unlike(string $type, int $id, User $user): array;
 
-    public function stats(string $type, int $id, User $user): array;
+    public function stats(string $type, int $id, Authenticatable $authUser): array;
 }
