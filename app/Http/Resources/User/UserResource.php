@@ -46,7 +46,7 @@ class UserResource extends JsonResource
                 'userable_id' => $this->userable_id,
                 'userable_type' => $this->userable_type,
 
-                'userable' => $this->formatUserableForOwner($this->userable->makeHidden('media')),
+                'userable' => $this->formatUserableForOwner($this->userable->makeHidden(['media', 'interactionCounter', 'likes'])),
                 'images' => $this->formatProfileImages(),
                 'cover_images' => $this->when(
                     $this->shouldIncludeCoverMedia(),
@@ -95,7 +95,7 @@ class UserResource extends JsonResource
                     : ($this->role->name_ar ?? $this->role->name_en),
                 'userable_id' => $this->userable_id,
                 'userable_type' => $this->userable_type,
-                'userable' => $this->formatUserableByLocale($this->userable->makeHidden('media'), $locale),
+                'userable' => $this->formatUserableByLocale($this->userable->makeHidden(['media', 'interactionCounter', 'likes']), $locale),
                 'images' => $this->formatProfileImages(),
                 'cover_images' => $this->when(
                     $this->shouldIncludeCoverMedia(),
@@ -129,6 +129,13 @@ class UserResource extends JsonResource
                         'name' => $locale === 'ar' ? $type->name : $type->name_en,
                     ];
                 });
+
+                if ($this->shouldIncludeBrowseInteractionStats($request)) {
+                    $data = [
+                        ...$data,
+                        ...$this->getServiceProviderInteractionStats(),
+                    ];
+                }
             }
 
             // If authenticated user is a Client, return get-only permissions for this service provider
@@ -170,7 +177,13 @@ class UserResource extends JsonResource
         }
 
         // نرجع جميع الحقول كما هي (بما فيها _ar و _en) مع إخفاء orderStatusAble
-        $data = $userable->makeHidden(['orderStatusAble', 'order_status_able'])->toArray();
+        $data = $userable->makeHidden([
+            'orderStatusAble',
+            'order_status_able',
+            'interactionCounter',
+            'interaction_counter',
+            'likes',
+        ])->toArray();
         return $data;
     }
     
@@ -322,6 +335,27 @@ class UserResource extends JsonResource
         return [
             'id' => $media->id,
             'url' => $media->youtube_link,
+        ];
+    }
+
+    private function shouldIncludeBrowseInteractionStats(Request $request): bool
+    {
+        return $request->routeIs('get-service-providers-by-role-id')
+            && $this->userable_type === 'App\Models\ServiceProvider'
+            && $this->userable !== null;
+    }
+
+    private function getServiceProviderInteractionStats(): array
+    {
+        $counter = $this->userable->relationLoaded('interactionCounter')
+            ? $this->userable->interactionCounter
+            : null;
+
+        return [
+            'is_liked' => $this->userable->relationLoaded('likes')
+                && $this->userable->likes->isNotEmpty(),
+            'likes_count' => (int) ($counter?->likes_count ?? 0),
+            'views_count' => (int) ($counter?->views_count ?? 0),
         ];
     }
 }
