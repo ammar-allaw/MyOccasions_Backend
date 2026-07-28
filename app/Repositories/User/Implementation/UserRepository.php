@@ -219,8 +219,13 @@ class UserRepository implements UserRepositoryInterface
 
     public function paginateUsersByRoleIdForClient($role, array $filters, int $page, int $perPage): LengthAwarePaginator
     {
+        $authUserId = auth('api')->id();
+
         $collection = $this->buildUserByRoleIdQuery($role, $filters)
-            ->with(self::CLIENT_BROWSE_WITH)
+            ->with(array_merge(self::CLIENT_BROWSE_WITH, [
+                'userable.interactionCounter',
+                'userable.likes' => fn ($query) => $query->where('user_id', $authUserId),
+            ]))
             ->get();
 
         $page = max(1, $page);

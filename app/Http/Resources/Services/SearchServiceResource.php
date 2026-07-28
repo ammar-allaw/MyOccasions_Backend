@@ -51,6 +51,7 @@ class SearchServiceResource extends JsonResource
 
         $data = [
             'id' => $this->id,
+            'userable_id' => $serviceProvider?->id,
             'name' => $name,
             'description' => $description,
             'price' => $this->price,

@@ -6,6 +6,8 @@ use App\Repositories\Food\Implementation\FoodRepository;
 use App\Repositories\Food\Interface\FoodRepositoryInterface;
 use App\Repositories\Interaction\Implementation\InteractionRepository;
 use App\Repositories\Interaction\Interface\InteractionRepositoryInterface;
+use App\Repositories\LegalDocument\Implementation\LegalDocumentRepository;
+use App\Repositories\LegalDocument\Interface\LegalDocumentRepositoryInterface;
 use App\Repositories\Permission\PermissionRepository;
 use App\Repositories\Permission\PermissionRepositoryInterface;
 use App\Repositories\Role\Implementation\RoleRepository;
@@ -24,6 +26,8 @@ use App\Services\Food\Implementation\FoodService;
 use App\Services\Food\Interface\FoodServiceInterface;
 use App\Services\Interaction\Implementation\InteractionService;
 use App\Services\Interaction\Interface\InteractionServiceInterface;
+use App\Services\LegalDocument\Implementation\LegalDocumentService;
+use App\Services\LegalDocument\Interface\LegalDocumentServiceInterface;
 use App\Services\Owner\Permission\PermissionService;
 use App\Services\Owner\Permission\PermissionServiceInterface;
 use App\Services\Owner\Role\RoleService as OwnerRoleService;
@@ -63,6 +67,8 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(FoodServiceInterface::class, FoodService::class);
         $this->app->bind(InteractionRepositoryInterface::class, InteractionRepository::class);
         $this->app->bind(InteractionServiceInterface::class, InteractionService::class);
+        $this->app->bind(LegalDocumentRepositoryInterface::class, LegalDocumentRepository::class);
+        $this->app->bind(LegalDocumentServiceInterface::class, LegalDocumentService::class);
 
         $this->app->bind(RoleRepositoryInterface::class, RoleRepository::class);
         $this->app->bind(OwnerRoleServiceInterface::class, OwnerRoleService::class);
