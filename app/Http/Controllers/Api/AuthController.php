@@ -7,10 +7,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AddImageForServiceProvider;
 use App\Http\Requests\Auth\LoginOwnerRequest;
 use App\Http\Requests\Auth\LoginUserRequest;
+use App\Http\Requests\Auth\ResendRegistrationOtpRequest;
 use App\Http\Requests\Auth\RegisterUserRequest;
+use App\Http\Requests\Auth\VerifyRegistrationOtpRequest;
 use App\Http\Resources\Auth\ClientProfileResource;
 use App\Http\Resources\User\UserResource;
 use App\Models\User;
+use App\Services\Otp\Interface\RegistrationOtpServiceInterface;
 use App\Services\Owner\OwnerService;
 use App\Services\User\Interface\UserServiceInterface;
 use Exception;
@@ -29,7 +32,7 @@ class AuthController extends Controller
     private $ownerService;
 
     public function __construct(Handler $handler,UserServiceInterface $userService
-    ,OwnerService $ownerService)
+    ,OwnerService $ownerService, private RegistrationOtpServiceInterface $registrationOtpService)
     {
         $this->handler=$handler;
         $this->userService=$userService;
@@ -41,22 +44,60 @@ class AuthController extends Controller
     {
         try{
             $data = $dataRequest->validated();
-            $client = $this->userService->createClient($data);
-            $user = $this->userService->createUser($data, $client);
-            $user->load('role');
-            $dive_name = $dataRequest->post('dive_name', $dataRequest->userAgent()) ?? 'web';
-            $userToken = $user->createToken($dive_name, ['*'], null);
+            $otpData = $this->registrationOtpService->start($data);
+
             return $this->handler->successResponse(
-                ['user' => new UserResource($user), 'token' => $userToken->plainTextToken],
+                $otpData,
                 true,
-                'success registration user',
+                'success send otp code',
                 200);
+        }catch(\App\Exceptions\ApiResponseException $e){
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
         }catch(Exception $e){
             return $this->handler->errorResponse(
                 false,
                 $e->getMessage(),
                 null
             ,400);
+        }
+    }
+
+    public function verifyRegistrationOtp(VerifyRegistrationOtpRequest $request)
+    {
+        try {
+            $data = $request->validated();
+            $user = $this->registrationOtpService->verify($data['phone_number'], $data['code']);
+            $dive_name = $request->post('dive_name', $request->userAgent()) ?? 'web';
+            $userToken = $user->createToken($dive_name, ['*'], null);
+
+            return $this->handler->successResponse(
+                ['user' => new UserResource($user), 'token' => $userToken->plainTextToken],
+                true,
+                'success registration user',
+                200
+            );
+        } catch (\App\Exceptions\ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
+        }
+    }
+
+    public function resendRegistrationOtp(ResendRegistrationOtpRequest $request)
+    {
+        try {
+            $otpData = $this->registrationOtpService->resend($request->validated()['phone_number']);
+
+            return $this->handler->successResponse(
+                $otpData,
+                true,
+                'success resend otp code',
+                200
+            );
+        } catch (\App\Exceptions\ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
         }
     }
 

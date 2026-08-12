@@ -34,8 +34,8 @@ class RegisterUserRequest extends FormRequest
             'last_name'=>'required|string',
             'phone_number'=>['required', 'string', $this->syrianPhoneNumberRule(), 'unique:users,phone_number,except,id'],
             'role_id'=>'nullable|exists:roles,id',
-            'password'=>'required|string|min:9|max:50',
-            'password_confirmation'=>'required|string|min:9|max:50,confirmed',
+            'password'=>'required|string|min:9|max:50|confirmed',
+            'password_confirmation'=>'required|string|min:9|max:50',
             'government_id'=>'required|exists:governments,id',
         ];
     }

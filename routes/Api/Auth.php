@@ -10,7 +10,9 @@ Route::controller(AuthController::class)
         Route::post('login-service-provider','loginServiceProvider')->name('login-service-provider');
         Route::get('profile','profile')->name('profile')->middleware('auth:api');
         Route::post('logout','logout')->name('logout')->middleware('auth:api');
-        Route::post('register','register')->name('register');
+        Route::post('register','register')->name('register')->middleware('throttle:register-otp');
+        Route::post('register/verify-otp','verifyRegistrationOtp')->name('register.verify-otp')->middleware('throttle:verify-register-otp');
+        Route::post('register/resend-otp','resendRegistrationOtp')->name('register.resend-otp')->middleware('throttle:resend-register-otp');
         Route::post('/login-owner','loginOwner')->name('/login-owner');
         Route::post('/reset-password','resetPassword')->name('/reset-password')
         ->middleware('auth:owner');

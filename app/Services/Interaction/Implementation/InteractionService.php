@@ -77,6 +77,11 @@ class InteractionService implements InteractionServiceInterface
         );
     }
 
+    public function liked(User $user): array
+    {
+        return $this->interactionRepository->likedTargetsForUser($user);
+    }
+
     private function summary(string $type, Model $target, ?User $user, string $state): array
     {
         $counts = $this->interactionRepository->counts($target);

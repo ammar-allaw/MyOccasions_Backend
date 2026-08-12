@@ -340,7 +340,7 @@ class UserResource extends JsonResource
 
     private function shouldIncludeBrowseInteractionStats(Request $request): bool
     {
-        return $request->routeIs('get-service-providers-by-role-id')
+        return ($request->routeIs('get-service-providers-by-role-id') || $request->routeIs('interactions.liked'))
             && $this->userable_type === 'App\Models\ServiceProvider'
             && $this->userable !== null;
     }
