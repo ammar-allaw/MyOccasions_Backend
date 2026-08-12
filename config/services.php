@@ -31,4 +31,11 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'aman_gate' => [
+        'token' => env('AMAN_GATE_TOKEN'),
+        'otp_template_id' => env('AMAN_GATE_OTP_TEMPLATE_ID'),
+        'base_url' => env('AMAN_GATE_BASE_URL', 'https://aman-gate.com/api'),
+        'language' => env('AMAN_GATE_LANGUAGE', 1),
+    ],
+
 ];

@@ -114,6 +114,62 @@ class InteractionRepository implements InteractionRepositoryInterface
             ->exists();
     }
 
+    public function likedTargetsForUser(User $user): array
+    {
+        $likes = ModelLike::query()
+            ->where('user_id', $user->id)
+            ->latest()
+            ->get()
+            ->groupBy('likeable_type');
+
+        $serviceProviderIds = $likes->get(ServiceProvider::class)?->pluck('likeable_id')->all() ?? [];
+        $roomIds = $likes->get(Room::class)?->pluck('likeable_id')->all() ?? [];
+        $serviceIds = $likes->get(Service::class)?->pluck('likeable_id')->all() ?? [];
+        $foodIds = $likes->get(Food::class)?->pluck('likeable_id')->all() ?? [];
+
+        return [
+            'service_providers' => User::query()
+                ->with([
+                    'userable',
+                    'userable.types',
+                    'userable.interactionCounter',
+                    'userable.likes' => fn ($query) => $query->where('user_id', $user->id),
+                    'userPermissions',
+                    'role.permissions',
+                ])
+                ->where('userable_type', ServiceProvider::class)
+                ->whereIn('userable_id', $serviceProviderIds)
+                ->whereHasMorph('userable', [ServiceProvider::class], function ($query) {
+                    $query->whereHas('orderStatusAble.status', function ($statusQuery) {
+                        $statusQuery->where('name_en', 'accepted');
+                    });
+                })
+                ->get(),
+            'rooms' => Room::query()
+                ->with(['media', 'orderStatusAble.status'])
+                ->whereIn('id', $roomIds)
+                ->whereHas('orderStatusAble.status', function ($statusQuery) {
+                    $statusQuery->where('name_en', 'accepted');
+                })
+                ->get(),
+            'services' => Service::query()
+                ->with(['media', 'mainKeys', 'orderStatusAble.status'])
+                ->whereIn('id', $serviceIds)
+                ->whereHas('orderStatusAble.status', function ($statusQuery) {
+                    $statusQuery->where('name_en', 'accepted');
+                })
+                ->get(),
+            'foods' => Food::query()
+                ->with(['media', 'mainKey', 'serviceProvider', 'orderStatusAble.status'])
+                ->whereIn('id', $foodIds)
+                ->where('is_active', true)
+                ->whereHas('orderStatusAble.status', function ($statusQuery) {
+                    $statusQuery->where('name_en', 'accepted');
+                })
+                ->get(),
+        ];
+    }
+
     private function counterFor(Model $target): InteractionCounter
     {
         return InteractionCounter::firstOrCreate(

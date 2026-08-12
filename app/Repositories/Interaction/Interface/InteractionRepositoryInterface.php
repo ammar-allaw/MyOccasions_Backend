@@ -19,4 +19,6 @@ interface InteractionRepositoryInterface
     public function counts(Model $target): array;
 
     public function isLikedBy(Model $target, User $user): bool;
+
+    public function likedTargetsForUser(User $user): array;
 }
