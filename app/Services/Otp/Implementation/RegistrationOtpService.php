@@ -54,11 +54,11 @@ class RegistrationOtpService implements RegistrationOtpServiceInterface
         $pendingRegistration = $this->pendingRegistrationRepository->findByPhoneNumber($phoneNumber);
 
         if (! $pendingRegistration) {
-            throw new ApiResponseException('No pending registration found for this phone number', 404, null);
+            throw new ApiResponseException($this->message('pending_registration_not_found'), 404, null);
         }
 
         if ($pendingRegistration->last_sent_at && $pendingRegistration->last_sent_at->diffInSeconds(now()) < self::RESEND_COOLDOWN_SECONDS) {
-            throw new ApiResponseException('Please wait before requesting another OTP code', 429, [
+            throw new ApiResponseException($this->message('resend_cooldown'), 429, [
                 'retry_after' => self::RESEND_COOLDOWN_SECONDS - $pendingRegistration->last_sent_at->diffInSeconds(now()),
             ]);
         }
@@ -89,21 +89,21 @@ class RegistrationOtpService implements RegistrationOtpServiceInterface
         $pendingRegistration = $this->pendingRegistrationRepository->findByPhoneNumber($phoneNumber);
 
         if (! $pendingRegistration) {
-            throw new ApiResponseException('No pending registration found for this phone number', 404, null);
+            throw new ApiResponseException($this->message('pending_registration_not_found'), 404, null);
         }
 
         if ($pendingRegistration->expires_at->isPast()) {
-            throw new ApiResponseException('OTP code has expired', 422, null);
+            throw new ApiResponseException($this->message('otp_expired'), 422, null);
         }
 
         if ($pendingRegistration->attempts >= self::MAX_VERIFY_ATTEMPTS) {
-            throw new ApiResponseException('Maximum OTP attempts exceeded', 429, null);
+            throw new ApiResponseException($this->message('max_attempts_exceeded'), 429, null);
         }
 
         if (! Hash::check($code, $pendingRegistration->otp_hash)) {
             $this->pendingRegistrationRepository->incrementAttempts($pendingRegistration);
 
-            throw new ApiResponseException('Invalid OTP code', 422, [
+            throw new ApiResponseException($this->message('invalid_otp'), 422, [
                 'remaining_attempts' => max(0, self::MAX_VERIFY_ATTEMPTS - ($pendingRegistration->attempts + 1)),
             ]);
         }
@@ -139,5 +139,36 @@ class RegistrationOtpService implements RegistrationOtpServiceInterface
             'expires_in' => self::OTP_TTL_MINUTES * 60,
             'resend_after' => self::RESEND_COOLDOWN_SECONDS,
         ];
+    }
+
+    private function message(string $key): string
+    {
+        $locale = $this->locale();
+
+        $messages = [
+            'ar' => [
+                'pending_registration_not_found' => 'لا يوجد طلب تسجيل بانتظار التحقق لهذا الرقم',
+                'resend_cooldown' => 'يرجى الانتظار قبل طلب رمز تحقق جديد',
+                'otp_expired' => 'انتهت صلاحية رمز التحقق',
+                'max_attempts_exceeded' => 'تم تجاوز الحد الأقصى لمحاولات التحقق',
+                'invalid_otp' => 'رمز التحقق غير صحيح',
+            ],
+            'en' => [
+                'pending_registration_not_found' => 'No pending registration found for this phone number',
+                'resend_cooldown' => 'Please wait before requesting another OTP code',
+                'otp_expired' => 'OTP code has expired',
+                'max_attempts_exceeded' => 'Maximum OTP attempts exceeded',
+                'invalid_otp' => 'Invalid OTP code',
+            ],
+        ];
+
+        return $messages[$locale][$key] ?? $key;
+    }
+
+    private function locale(): string
+    {
+        return str_starts_with(strtolower((string) request()->header('Accept-Language', 'ar')), 'en')
+            ? 'en'
+            : 'ar';
     }
 }
