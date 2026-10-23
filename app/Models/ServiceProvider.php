@@ -62,4 +62,14 @@ class ServiceProvider extends Model implements HasMedia
         return $this->belongsTo(Region::class);
     }
 
+    public function interactionCounter()
+    {
+        return $this->morphOne(InteractionCounter::class, 'interactable');
+    }
+
+    public function likes()
+    {
+        return $this->morphMany(ModelLike::class, 'likeable');
+    }
+
 }

@@ -13,6 +13,8 @@ interface UserServiceInterface
     public function getAllUser(array $filters = []);
     // public function userable($user);
     public function findUserByPhoneNumber($phoneNumber);
+    public function findServiceProviderUserByPhoneNumber($phoneNumber);
+    public function findUserByPhoneNumberAndRole($phoneNumber, int $roleId);
     public function findUserById($id);
     public function getClientProfile(): User;
     public function createUser(array $data,$userType);

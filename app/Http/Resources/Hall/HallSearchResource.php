@@ -80,6 +80,7 @@ class HallSearchResource extends JsonResource
         if ($matchingRoom) {
             $roomDetails = [
                 'id' => $matchingRoom->id,
+                // 'userable_id' => $serviceProvider?->id,
                 'name' => $locale === 'en' ? $matchingRoom->name_en : $matchingRoom->name,
                 'description' => $locale === 'en' ? $matchingRoom->description_en : $matchingRoom->description,
                 'price' => $matchingRoom->rent_price,
@@ -91,6 +92,7 @@ class HallSearchResource extends JsonResource
         
         return [
             'id' => $user->id,
+            'userable_id' => $serviceProvider?->id,
             ...$this->serviceProviderContactFields($serviceProvider, $user),
             'hall_name' => $hallName,
             'types' => $serviceProvider && $serviceProvider->relationLoaded('types')

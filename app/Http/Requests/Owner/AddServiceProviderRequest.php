@@ -59,7 +59,16 @@ class AddServiceProviderRequest extends FormRequest
                 $this->syrianLandlinePhoneRule(),
             ],
             'use_landline_for_calls'=>'nullable|boolean',
-            'password'=>'required|string|min:9|max:50',
+            'create_client_account'=>'nullable|boolean',
+            'client_first_name'=>'nullable|string|min:2|max:200',
+            'client_last_name'=>'nullable|string|min:2|max:200',
+            'password'=>[
+                'required',
+                'string',
+                'min:8',
+                'max:50',
+                'regex:/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/',
+            ],
             'image'=>'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'user_type' => 'nullable|array',
             'user_type.*' => [
@@ -79,6 +88,7 @@ class AddServiceProviderRequest extends FormRequest
         return [
             'user_type.*.exists' => 'The selected user type does not belong to the selected role.',
             'landline_phone.regex' => 'The landline phone must be a valid Syrian landline number.',
+            'password.regex' => 'The password must contain at least one uppercase letter, one number, and one special character.',
         ];
     }
 }

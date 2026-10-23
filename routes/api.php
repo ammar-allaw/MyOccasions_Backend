@@ -36,3 +36,4 @@ require __DIR__."{$api_path}/Interaction.php";
 require __DIR__."{$api_path}/Type.php";
 require __DIR__."{$api_path}/Status.php";
 require __DIR__."{$api_path}/Government.php";
+require __DIR__."{$api_path}/LegalDocument.php";

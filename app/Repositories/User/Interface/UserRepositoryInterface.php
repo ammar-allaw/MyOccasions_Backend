@@ -7,6 +7,8 @@ interface UserRepositoryInterface
     public function getAllUser(array $filters = []);
     public function getUserByRoleId($role, $filters = []);
     public function findUserByPhoneNumber($id);
+    public function findServiceProviderUserByPhoneNumber($phoneNumber);
+    public function findUserByPhoneNumberAndRole($phoneNumber, int $roleId);
     public function findUserById($id);
     public function findClientProfileByUserId(int $id);
     public function createUser(array $data);

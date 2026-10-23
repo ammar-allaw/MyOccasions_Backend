@@ -142,7 +142,23 @@ class UserRepository implements UserRepositoryInterface
 
     public function findUserByPhoneNumber($phoneNumber)
     {
-        return User::where('phone_number', $phoneNumber)->first();
+        return User::where('phone_number', $phoneNumber)
+            ->orderBy('is_provider')
+            ->first();
+    }
+
+    public function findServiceProviderUserByPhoneNumber($phoneNumber)
+    {
+        return User::where('phone_number', $phoneNumber)
+            ->where('is_provider', true)
+            ->first();
+    }
+
+    public function findUserByPhoneNumberAndRole($phoneNumber, int $roleId)
+    {
+        return User::where('phone_number', $phoneNumber)
+            ->where('role_id', $roleId)
+            ->first();
     }
 
     public function findUserById($id)
@@ -203,8 +219,13 @@ class UserRepository implements UserRepositoryInterface
 
     public function paginateUsersByRoleIdForClient($role, array $filters, int $page, int $perPage): LengthAwarePaginator
     {
+        $authUserId = auth('api')->id();
+
         $collection = $this->buildUserByRoleIdQuery($role, $filters)
-            ->with(self::CLIENT_BROWSE_WITH)
+            ->with(array_merge(self::CLIENT_BROWSE_WITH, [
+                'userable.interactionCounter',
+                'userable.likes' => fn ($query) => $query->where('user_id', $authUserId),
+            ]))
             ->get();
 
         $page = max(1, $page);
