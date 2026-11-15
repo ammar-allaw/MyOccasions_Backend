@@ -23,7 +23,7 @@ class RoleController extends Controller
 
     public function getRoles()
     {
-        return $this->roleService->getBrowsableRolesForClient(auth()->user());
+        return $this->roleService->getBrowsableRolesForClient(auth('api')->user());
     }
 
     public function getRolesForOwner()

@@ -8,12 +8,17 @@ interface UserRepositoryInterface
     public function getUserByRoleId($role, $filters = []);
     public function findUserByPhoneNumber($id);
     public function findServiceProviderUserByPhoneNumber($phoneNumber);
+    public function findByPhoneNumberAndProviderStatus(string $phoneNumber, bool $isProvider);
+    public function findClientWithTrashedByPhoneNumber(string $phoneNumber);
     public function findUserByPhoneNumberAndRole($phoneNumber, int $roleId);
     public function findUserById($id);
     public function findClientProfileByUserId(int $id);
     public function createUser(array $data);
     public function createClient(array $data);
     public function updateUser($id, array $data);
+    public function revokeAllTokens(int $userId): void;
+    public function restoreClientAccount($user, array $data);
+    public function softDeleteClient($user): bool;
     public function deleteUser($id);
     public function getAllServiceProvider();
     public function findServiceProviderById($id);

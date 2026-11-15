@@ -7,5 +7,5 @@ use Illuminate\Http\JsonResponse;
 
 interface RoleServiceInterface
 {
-    public function getBrowsableRolesForClient(User $user): JsonResponse;
+    public function getBrowsableRolesForClient(?User $user): JsonResponse;
 }

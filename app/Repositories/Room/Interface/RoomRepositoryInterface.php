@@ -10,6 +10,8 @@ interface RoomRepositoryInterface
 
     public function getRoomsByHall($hall);
 
+    public function getAcceptedRoomsByHall($hall);
+
     public function findRoom($roomId);
 
     public function deleteRoom($room);

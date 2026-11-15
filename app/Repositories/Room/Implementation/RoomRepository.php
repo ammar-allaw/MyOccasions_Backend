@@ -22,6 +22,26 @@ class RoomRepository implements RoomRepositoryInterface
         return $hall->rooms()->get();
     }
 
+    public function getAcceptedRoomsByHall($hall)
+    {
+        return $hall->rooms()
+            ->whereHas('orderStatusAble.status', function ($query) {
+                $query->where('name_en', 'accepted');
+            })
+            ->with([
+                'orderStatusAble.status',
+                'services' => function ($query) {
+                    $query->whereHas('orderStatusAble.status', function ($statusQuery) {
+                        $statusQuery->where('name_en', 'accepted');
+                    });
+                },
+                'services.orderStatusAble.status',
+                'services.media',
+                'media',
+            ])
+            ->get();
+    }
+
     public function findRoom($roomId)
     {
         return Room::find($roomId);

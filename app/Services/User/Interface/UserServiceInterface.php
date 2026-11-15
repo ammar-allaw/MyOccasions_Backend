@@ -19,6 +19,8 @@ interface UserServiceInterface
     public function getClientProfile(): User;
     public function createUser(array $data,$userType);
     public function createClient($data);
+    public function createOrRestoreClient(array $data): User;
+    public function deleteClientAccount(User $user, string $currentPassword): void;
     public function updateUser($id, array $data);
     public function deleteUser($id);
     public function getUserByRoleId($role, $filters = []);

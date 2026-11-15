@@ -12,9 +12,10 @@ class MainKeyResource extends JsonResource
     {
         $locale = $request->header('Accept-Language', 'ar');
         $authUser = Auth::guard('api')->user();
-        $isClient = $authUser && !$authUser->is_provider;
+        $isOwner = Auth::guard('owner')->check();
+        $isClientOrGuest = ! $isOwner && (! $authUser || ! $authUser->is_provider);
 
-        if ($isClient) {
+        if ($isClientOrGuest) {
             return [
                 'id' => $this->id,
                 'key' => $locale === 'en' ? ($this->key_en ?? $this->key) : $this->key,

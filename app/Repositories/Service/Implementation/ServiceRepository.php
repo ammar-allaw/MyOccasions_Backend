@@ -3,7 +3,9 @@
 namespace App\Repositories\Service\Implementation;
 
 use App\Models\MainKey;
+use App\Models\Room;
 use App\Models\Service;
+use App\Models\ServiceProvider;
 use App\Repositories\Service\Interface\ServiceRepositoryInterface;
 
 class ServiceRepository implements ServiceRepositoryInterface
@@ -111,5 +113,28 @@ class ServiceRepository implements ServiceRepositoryInterface
     public function findServiceModelById(int $id)
     {
         return Service::find($id);
+    }
+
+    public function isPubliclyVisible(int $serviceId): bool
+    {
+        return Service::query()
+            ->whereKey($serviceId)
+            ->whereHas('orderStatusAble.status', function ($query) {
+                $query->where('name_en', 'accepted');
+            })
+            ->where(function ($query) {
+                $query->whereHasMorph('serviceable', [ServiceProvider::class], function ($providerQuery) {
+                    $providerQuery->whereHas('orderStatusAble.status', function ($statusQuery) {
+                        $statusQuery->where('name_en', 'accepted');
+                    });
+                })->orWhereHasMorph('serviceable', [Room::class], function ($roomQuery) {
+                    $roomQuery->whereHas('orderStatusAble.status', function ($statusQuery) {
+                        $statusQuery->where('name_en', 'accepted');
+                    })->whereHas('serviceProvider.orderStatusAble.status', function ($statusQuery) {
+                        $statusQuery->where('name_en', 'accepted');
+                    });
+                });
+            })
+            ->exists();
     }
 }

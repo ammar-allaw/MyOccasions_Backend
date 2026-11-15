@@ -69,6 +69,40 @@ class RouteServiceProvider extends ServiceProvider
                 Limit::perMinute(15)->by($request->ip()),
             ];
         });
+
+        RateLimiter::for('forgot-password-otp', function (Request $request) {
+            $accountType = strtolower((string) $request->input('account_type', 'client'));
+
+            return [
+                Limit::perMinute(3)->by($this->otpPhoneRateLimitKey($request).':'.$accountType),
+                Limit::perMinute(15)->by($request->ip()),
+            ];
+        });
+
+        RateLimiter::for('forgot-password-verify-otp', function (Request $request) {
+            $accountType = strtolower((string) $request->input('account_type', 'client'));
+
+            return [
+                Limit::perMinute(10)->by($this->otpPhoneRateLimitKey($request).':'.$accountType),
+                Limit::perMinute(30)->by($request->ip()),
+            ];
+        });
+
+        RateLimiter::for('forgot-password-reset', function (Request $request) {
+            $resetTokenKey = hash('sha256', (string) $request->input('reset_token', ''));
+
+            return [
+                Limit::perMinute(5)->by($resetTokenKey ?: $request->ip()),
+                Limit::perMinute(15)->by($request->ip()),
+            ];
+        });
+
+        RateLimiter::for('account-deletion', function (Request $request) {
+            return [
+                Limit::perMinute(5)->by((string) $request->user()?->id),
+                Limit::perMinute(20)->by($request->ip()),
+            ];
+        });
     }
 
     private function otpPhoneRateLimitKey(Request $request): string

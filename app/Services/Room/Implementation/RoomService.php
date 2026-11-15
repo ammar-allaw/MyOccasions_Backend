@@ -157,9 +157,26 @@ class RoomService implements RoomServiceInterface
 
     public function getRoomsByHallId($hallId)
     {
-        $user = $this->userRepository->findUserById($hallId);
+        $user = $this->userRepository->findServiceProviderById($hallId);
+        if (! $user) {
+            throw new ApiResponseException('Hall not found', 404, null);
+        }
         $user->load('userable');
         $hall = $user->userable;
+
+        $isGuest = ! Auth::guard('api')->check() && ! Auth::guard('owner')->check();
+        if ($isGuest) {
+            if (! $hall instanceof ServiceProvider || $user->role?->name_en !== 'halls') {
+                throw new ApiResponseException('Hall not found', 404, null);
+            }
+
+            $hall->loadMissing('orderStatusAble.status');
+            if (! $hall->orderStatusAble || $hall->orderStatusAble->status?->name_en !== 'accepted') {
+                throw new ApiResponseException('Hall not found', 404, null);
+            }
+
+            return $this->roomRepo->getAcceptedRoomsByHall($hall);
+        }
 
         return $hall->rooms;
     }
@@ -173,20 +190,22 @@ class RoomService implements RoomServiceInterface
             }
         }
 
-        if (! $authUser) {
-            throw new ApiResponseException('Unauthorized', 401, null);
+        $isGuest = ! $authUser;
+        if (! $isGuest) {
+            $authUser->load('role');
         }
+        $isClient = $isGuest || $authUser->role->name_en === 'client';
 
-        $authUser->load('role');
-        $isClient = $authUser->role->name_en === 'client';
-
-        if ($authUser->role->name_en === 'halls') {
+        if (! $isGuest && $authUser->role->name_en === 'halls') {
             $user = $authUser;
         } else {
             if (! $userId) {
                 throw new ApiResponseException('Hall ID is required', 400, null);
             }
-            $user = $this->userRepository->findUserById($userId);
+            $user = $this->userRepository->findServiceProviderById($userId);
+            if (! $user) {
+                throw new ApiResponseException('Hall not found', 404, null);
+            }
             if ($user->role->name_en != 'halls') {
                 throw new ApiResponseException('The specified user is not a hall', 400, null);
             }

@@ -8,5 +8,4 @@ Route::controller(RoleController::class)->prefix('owner')->middleware('auth:owne
 });
 
 Route::get('/app/get-roles', [RoleController::class, 'getRoles'])
-    ->name('get-roles')
-    ->middleware(['auth:api']);
+    ->name('get-roles');

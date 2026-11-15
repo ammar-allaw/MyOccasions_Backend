@@ -13,7 +13,10 @@ class TypeResource extends JsonResource
     public function toArray($request): array
     {
         $lang = $request->header('Accept-Language');
-        if(Auth::guard('api')->check() && Auth::guard('api')->user()->is_provider==false)
+        $authUser = Auth::guard('api')->user();
+        $isOwner = Auth::guard('owner')->check();
+
+        if(! $isOwner && (! $authUser || $authUser->is_provider == false))
         {
             return [
                 'id' => $this->id,

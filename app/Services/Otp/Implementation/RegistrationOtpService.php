@@ -117,8 +117,7 @@ class RegistrationOtpService implements RegistrationOtpServiceInterface
                 'government_id' => $pendingRegistration->government_id,
             ];
 
-            $client = $this->userService->createClient($data);
-            $user = $this->userService->createUser($data, $client);
+            $user = $this->userService->createOrRestoreClient($data);
             $user->load('role');
 
             $this->pendingRegistrationRepository->delete($pendingRegistration);

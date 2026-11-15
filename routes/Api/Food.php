@@ -16,9 +16,9 @@ Route::controller(FoodController::class)
 
         Route::get('/get-foods', 'getFoods')
             ->name('get-foods')
-            ->middleware('can.access:true,true,get_foods');
+            ->middleware('can.access:true,true,get_foods,true');
 
         Route::get('/get-food/{foodId}', 'getFood')
             ->name('get-food')
-            ->middleware('can.access:true,true,find_food');
+            ->middleware('can.access:true,true,find_food,true');
     });

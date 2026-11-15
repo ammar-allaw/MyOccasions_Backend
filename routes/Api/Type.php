@@ -8,7 +8,7 @@ Route::controller(TypeController::class)
     ->group(function () {
         Route::get('/', 'getTypes')
             ->name('get-types')
-            ->middleware('can.access:true,true,get_types');
+            ->middleware('can.access:true,true,get_types,true');
 
         Route::post('/', 'storeType')
             ->name('store-type')

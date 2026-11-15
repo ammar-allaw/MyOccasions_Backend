@@ -16,11 +16,12 @@ class CanAccessMiddleware
      *
      * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
-    public function handle(Request $request, Closure $next, $isOwner = null, $isClient = null, $permissionName = null): Response
+    public function handle(Request $request, Closure $next, $isOwner = null, $isClient = null, $permissionName = null, $allowGuest = null): Response
     {
         // Normalize bool-like flags
         $isOwner = $this->toBool($isOwner);
         $isClient = $this->toBool($isClient);
+        $allowGuest = $this->toBool($allowGuest);
 
         // owner guard check
         $owner = false;
@@ -32,6 +33,10 @@ class CanAccessMiddleware
         $user = null;
         if (Auth::guard('api')->check()) {
             $user = User::find(Auth::guard('api')->id());
+        }
+
+        if ($allowGuest && ! $owner && ! $user) {
+            return $next($request);
         }
 
         if ($isOwner && $owner) {
