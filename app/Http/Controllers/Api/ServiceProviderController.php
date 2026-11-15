@@ -185,7 +185,7 @@ class ServiceProviderController extends Controller
 
     public function getServiceProvidersByRoleId($roleId)
     {
-        return $this->userService->getServiceProvidersByRoleIdForClient(auth()->user(), $roleId);
+        return $this->userService->getServiceProvidersByRoleIdForClient(auth('api')->user(), $roleId);
     }
 
     public function getServiceProvidersByRoleIdForOwner($roleId = null)

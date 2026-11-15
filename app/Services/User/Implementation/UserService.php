@@ -10,6 +10,7 @@ use App\Http\Resources\User\UserResource;
 use App\Models\Client;
 use App\Models\User;
 use App\Repositories\User\Interface\UserRepositoryInterface;
+use App\Repositories\Interaction\Interface\InteractionRepositoryInterface;
 use App\Services\Auth\AuthService;
 use App\Services\Service\Interface\ServiceServiceInterface;
 use App\Services\User\Interface\UserServiceInterface;
@@ -20,6 +21,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UserService implements UserServiceInterface
@@ -41,6 +43,7 @@ class UserService implements UserServiceInterface
 
     public function __construct(
         UserRepositoryInterface $userRepo,
+        private InteractionRepositoryInterface $interactionRepository,
         private Handler $handler,
         private AuthService $authService,
         private ServiceServiceInterface $serviceService,
@@ -144,6 +147,62 @@ class UserService implements UserServiceInterface
     {
         $client=$this->userRepo->createClient($data);
         return $client;
+    }
+
+    public function createOrRestoreClient(array $data): User
+    {
+        $existingClient = $this->userRepo->findClientWithTrashedByPhoneNumber($data['phone_number']);
+
+        if ($existingClient?->trashed()) {
+            return $this->userRepo->restoreClientAccount($existingClient, $data);
+        }
+
+        if ($existingClient) {
+            throw new ApiResponseException($this->clientAccountMessage('already_exists'), 422, null);
+        }
+
+        $client = $this->createClient($data);
+
+        return $this->createUser($data, $client);
+    }
+
+    public function deleteClientAccount(User $user, string $currentPassword): void
+    {
+        if ($user->is_provider || $user->userable_type !== Client::class) {
+            throw new ApiResponseException($this->clientAccountMessage('clients_only'), 403, null);
+        }
+
+        if (! Hash::check($currentPassword, $user->password)) {
+            throw new ApiResponseException($this->clientAccountMessage('invalid_password'), 422, null);
+        }
+
+        DB::transaction(function () use ($user) {
+            $this->interactionRepository->deleteUserActivity($user);
+            $this->userRepo->revokeAllTokens($user->id);
+            $this->userRepo->softDeleteClient($user);
+        });
+    }
+
+    private function clientAccountMessage(string $key): string
+    {
+        $locale = str_starts_with(strtolower((string) request()->header('Accept-Language', 'ar')), 'en')
+            ? 'en'
+            : 'ar';
+
+        $messages = [
+            'ar' => [
+                'already_exists' => 'يوجد حساب عميل فعّال مرتبط برقم الهاتف هذا',
+                'clients_only' => 'هذه العملية متاحة للعملاء فقط',
+                'invalid_password' => 'كلمة المرور الحالية غير صحيحة',
+            ],
+            'en' => [
+                'already_exists' => 'An active client account already exists for this phone number',
+                'clients_only' => 'This operation is available to clients only',
+                'invalid_password' => 'Current password is incorrect',
+            ],
+        ];
+
+        return $messages[$locale][$key] ?? $key;
     }
 
     public function updateUser($id, array $data){}
@@ -319,14 +378,36 @@ class UserService implements UserServiceInterface
 
     public function getServiceProviderDetails($user, $userId = null): User
     {
-        if ($user && $user->is_provider == true) {
+        $isGuest = ! $user && ! Auth::guard('owner')->check();
+
+        if ($isGuest) {
+            if ($userId == null) {
+                throw new ApiResponseException('Service provider ID is required', 400, []);
+            }
+
+            $user = $this->findServiceProviderById($userId);
+            $user->load('userable.orderStatusAble.status');
+
+            if ($user->is_provider != true
+                || ! $user->userable?->orderStatusAble
+                || $user->userable->orderStatusAble->status?->name_en !== 'accepted') {
+                throw new ApiResponseException('Service provider not found', 404, []);
+            }
+        } elseif ($user && $user->is_provider == true) {
             $user->load('userable');
         } else {
-            if ((Auth::guard('owner')->check() ||
-                (Auth::guard('api')->check() && Auth::guard('api')->user()->is_provider == false))
-                && $userId != null) {
-                $user = $this->findUserById($userId);
-                $user->load('userable');
+            $isClient = Auth::guard('api')->check()
+                && Auth::guard('api')->user()->is_provider == false;
+
+            if ((Auth::guard('owner')->check() || $isClient) && $userId != null) {
+                $user = $this->findServiceProviderById($userId);
+                $user->load($isClient ? 'userable.orderStatusAble.status' : 'userable');
+
+                if ($isClient
+                    && (! $user->userable?->orderStatusAble
+                        || $user->userable->orderStatusAble->status?->name_en !== 'accepted')) {
+                    throw new ApiResponseException('Service provider not found', 404, []);
+                }
             } else {
                 throw new ApiResponseException('Unauthorized', 401, []);
             }
@@ -507,8 +588,7 @@ class UserService implements UserServiceInterface
 
     public function getServiceProvidersByRoleIdForClient($user, $roleId): JsonResponse
     {
-        $role_name = $user->role->name_en;
-        if ($role_name != 'client') {
+        if ($user && $user->role->name_en != 'client') {
             return $this->handler->errorResponse(
                 false,
                 $this->message('unauthorized'),

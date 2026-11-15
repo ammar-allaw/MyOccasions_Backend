@@ -154,6 +154,23 @@ class UserRepository implements UserRepositoryInterface
             ->first();
     }
 
+    public function findByPhoneNumberAndProviderStatus(string $phoneNumber, bool $isProvider)
+    {
+        return User::query()
+            ->where('phone_number', $phoneNumber)
+            ->where('is_provider', $isProvider)
+            ->first();
+    }
+
+    public function findClientWithTrashedByPhoneNumber(string $phoneNumber)
+    {
+        return User::withTrashed()
+            ->where('phone_number', $phoneNumber)
+            ->where('is_provider', false)
+            ->where('userable_type', Client::class)
+            ->first();
+    }
+
     public function findUserByPhoneNumberAndRole($phoneNumber, int $roleId)
     {
         return User::where('phone_number', $phoneNumber)
@@ -197,6 +214,36 @@ class UserRepository implements UserRepositoryInterface
         $task = User::findOrFail($id);
         $task->update($data);
         return $task;
+    }
+
+    public function revokeAllTokens(int $userId): void
+    {
+        User::findOrFail($userId)->tokens()->delete();
+    }
+
+    public function restoreClientAccount($user, array $data)
+    {
+        $client = Client::query()->findOrFail($user->userable_id);
+        $client->update([
+            'first_name' => $data['first_name'],
+            'last_name' => $data['last_name'],
+            'government_id' => $data['government_id'],
+        ]);
+
+        $user->phone_number = $data['phone_number'];
+        $user->password = $data['password'];
+        $user->role_id = 2;
+        $user->is_provider = false;
+        $user->userable_type = Client::class;
+        $user->restore();
+        $user->save();
+
+        return $user->fresh();
+    }
+
+    public function softDeleteClient($user): bool
+    {
+        return (bool) $user->delete();
     }
 
     public function deleteUser($id)

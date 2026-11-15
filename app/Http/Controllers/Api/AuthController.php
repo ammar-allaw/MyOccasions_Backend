@@ -5,14 +5,19 @@ namespace App\Http\Controllers\Api;
 use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\AddImageForServiceProvider;
+use App\Http\Requests\Auth\DeleteClientAccountRequest;
+use App\Http\Requests\Auth\ForgotPasswordRequest;
 use App\Http\Requests\Auth\LoginOwnerRequest;
 use App\Http\Requests\Auth\LoginUserRequest;
 use App\Http\Requests\Auth\ResendRegistrationOtpRequest;
 use App\Http\Requests\Auth\RegisterUserRequest;
+use App\Http\Requests\Auth\ResetForgottenPasswordRequest;
 use App\Http\Requests\Auth\VerifyRegistrationOtpRequest;
+use App\Http\Requests\Auth\VerifyPasswordResetOtpRequest;
 use App\Http\Resources\Auth\ClientProfileResource;
 use App\Http\Resources\User\UserResource;
 use App\Models\User;
+use App\Services\Otp\Interface\PasswordResetOtpServiceInterface;
 use App\Services\Otp\Interface\RegistrationOtpServiceInterface;
 use App\Services\Owner\OwnerService;
 use App\Services\User\Interface\UserServiceInterface;
@@ -31,8 +36,13 @@ class AuthController extends Controller
     private $userService;
     private $ownerService;
 
-    public function __construct(Handler $handler,UserServiceInterface $userService
-    ,OwnerService $ownerService, private RegistrationOtpServiceInterface $registrationOtpService)
+    public function __construct(
+        Handler $handler,
+        UserServiceInterface $userService,
+        OwnerService $ownerService,
+        private RegistrationOtpServiceInterface $registrationOtpService,
+        private PasswordResetOtpServiceInterface $passwordResetOtpService,
+    )
     {
         $this->handler=$handler;
         $this->userService=$userService;
@@ -92,6 +102,60 @@ class AuthController extends Controller
                 $otpData,
                 true,
                 'success resend otp code',
+                200
+            );
+        } catch (\App\Exceptions\ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
+        }
+    }
+
+    public function forgotPassword(ForgotPasswordRequest $request)
+    {
+        try {
+            $otpData = $this->passwordResetOtpService->send($request->validated());
+
+            return $this->handler->successResponse(
+                $otpData,
+                true,
+                'success send password reset otp code',
+                200
+            );
+        } catch (\App\Exceptions\ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
+        }
+    }
+
+    public function verifyPasswordResetOtp(VerifyPasswordResetOtpRequest $request)
+    {
+        try {
+            $resetData = $this->passwordResetOtpService->verify($request->validated());
+
+            return $this->handler->successResponse(
+                $resetData,
+                true,
+                'success verify password reset otp',
+                200
+            );
+        } catch (\App\Exceptions\ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
+        }
+    }
+
+    public function resetForgottenPassword(ResetForgottenPasswordRequest $request)
+    {
+        try {
+            $this->passwordResetOtpService->resetPassword($request->validated());
+
+            return $this->handler->successResponse(
+                null,
+                true,
+                'success reset password',
                 200
             );
         } catch (\App\Exceptions\ApiResponseException $e) {
@@ -195,6 +259,27 @@ class AuthController extends Controller
                 ['profile' => new ClientProfileResource($user)],
                 true,
                 'success get profile',
+                200
+            );
+        } catch (\App\Exceptions\ApiResponseException $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), $e->data, $e->statusCode);
+        } catch (Exception $e) {
+            return $this->handler->errorResponse(false, $e->getMessage(), null, 400);
+        }
+    }
+
+    public function deleteClientAccount(DeleteClientAccountRequest $request)
+    {
+        try {
+            $this->userService->deleteClientAccount(
+                $request->user(),
+                $request->validated()['current_password']
+            );
+
+            return $this->handler->successResponse(
+                null,
+                true,
+                $this->clientAccountMessage('deleted'),
                 200
             );
         } catch (\App\Exceptions\ApiResponseException $e) {
@@ -333,6 +418,20 @@ class AuthController extends Controller
                 'user_not_found' => 'User not found',
                 'invalid_credentials' => 'Invalid credentials',
             ],
+        ];
+
+        return $messages[$locale][$key] ?? $key;
+    }
+
+    private function clientAccountMessage(string $key): string
+    {
+        $locale = str_starts_with(strtolower((string) request()->header('Accept-Language', 'ar')), 'en')
+            ? 'en'
+            : 'ar';
+
+        $messages = [
+            'ar' => ['deleted' => 'تم حذف الحساب بنجاح'],
+            'en' => ['deleted' => 'Account deleted successfully'],
         ];
 
         return $messages[$locale][$key] ?? $key;

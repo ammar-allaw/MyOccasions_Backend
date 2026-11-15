@@ -95,7 +95,14 @@ class UserResource extends JsonResource
                     : ($this->role->name_ar ?? $this->role->name_en),
                 'userable_id' => $this->userable_id,
                 'userable_type' => $this->userable_type,
-                'userable' => $this->formatUserableByLocale($this->userable->makeHidden(['media', 'interactionCounter', 'likes']), $locale),
+                'userable' => $this->formatUserableByLocale($this->userable->makeHidden([
+                    'media',
+                    'interactionCounter',
+                    'interaction_counter',
+                    'likes',
+                    'orderStatusAble',
+                    'order_status_able',
+                ]), $locale),
                 'images' => $this->formatProfileImages(),
                 'cover_images' => $this->when(
                     $this->shouldIncludeCoverMedia(),
@@ -138,8 +145,8 @@ class UserResource extends JsonResource
                 }
             }
 
-            // If authenticated user is a Client, return get-only permissions for this service provider
-            if ($authUser && $authUser->userable_type === \App\Models\Client::class) {
+            // Public viewers receive the same get-only capabilities, with or without a client token.
+            if (! $authUser || $authUser->userable_type === \App\Models\Client::class) {
                 $data['user_permissions'] = $this->whenLoaded('userPermissions', fn() =>
                     $this->userPermissions
                         ->filter(fn($p) => str_starts_with($p->name, 'get'))

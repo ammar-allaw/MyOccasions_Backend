@@ -16,10 +16,9 @@ class RoleService implements RoleServiceInterface
         private RoleRepositoryInterface $roleRepository,
     ) {}
 
-    public function getBrowsableRolesForClient(User $user): JsonResponse
+    public function getBrowsableRolesForClient(?User $user): JsonResponse
     {
-        $role_name = $user->role->name_en;
-        if ($role_name != 'client') {
+        if ($user && $user->role->name_en != 'client') {
             return $this->handler->errorResponse(
                 false,
                 $this->message('unauthorized'),

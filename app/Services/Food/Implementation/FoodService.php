@@ -45,6 +45,10 @@ class FoodService implements FoodServiceInterface
                     $serviceProvider = $this->authService->userable($user);
                     $filters['service_provider_id'] = $serviceProvider->id;
                 }
+            } elseif (! Auth::guard('owner')->check()) {
+                $filters['accepted_only'] = true;
+                $filters['is_active'] = true;
+                $filters['service_provider_accepted_only'] = true;
             }
 
             $paginator = $this->list($filters);
@@ -74,6 +78,15 @@ class FoodService implements FoodServiceInterface
     {
         try {
             $food = $this->foodRepo->findById($foodId);
+
+            $isGuest = ! Auth::guard('api')->check() && ! Auth::guard('owner')->check();
+            if ($isGuest
+                && (! $food->orderStatusAble
+                    || $food->orderStatusAble->status?->name_en !== 'accepted'
+                    || ! $food->is_active
+                    || $food->serviceProvider?->orderStatusAble?->status?->name_en !== 'accepted')) {
+                return $this->handler->errorResponse(false, 'Food not found', null, 404);
+            }
 
             if (Auth::guard('sanctum')->check()) {
                 $user = Auth::guard('sanctum')->user();

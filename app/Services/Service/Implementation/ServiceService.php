@@ -82,6 +82,12 @@ class ServiceService implements ServiceServiceInterface
                 }
                 $roleId = $data['role_id'];
             }
+        } else {
+            $isClient = true;
+            if (! isset($data['role_id'])) {
+                throw new Exception('role_id is required', 400);
+            }
+            $roleId = $data['role_id'];
         }
 
         $mainKeys = $this->serviceRepo->getMainKeys($roleId);
@@ -108,6 +114,11 @@ class ServiceService implements ServiceServiceInterface
         }
 
         return $mainKey;
+    }
+
+    public function isPubliclyVisible(Service $service): bool
+    {
+        return $this->serviceRepo->isPubliclyVisible($service->id);
     }
 
     public function updateMainKey($data, $mainKey)

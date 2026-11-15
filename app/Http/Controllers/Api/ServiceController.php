@@ -52,7 +52,7 @@ class ServiceController extends Controller
                     $canViewAll = true;
                 }
                 // Check if Requesting User is the Provider itself (by ID)
-                elseif ($user->is_provider && $user->userable && $user->userable->id == $serviceProvider->id) {
+                elseif ($user && $user->is_provider && $user->userable && $user->userable->id == $serviceProvider->id) {
                     $canViewAll = true;
                 }
             }
@@ -93,6 +93,7 @@ class ServiceController extends Controller
 
             $canViewAll = false;
             $user = $this->authService->authUser();
+            $isGuest = ! Auth::guard('api')->check() && ! Auth::guard('owner')->check();
 
             // Check if Owner (Admin)
             if (Auth::guard('owner')->check()) {
@@ -110,7 +111,7 @@ class ServiceController extends Controller
             // If not admin or owner of service, only show accepted services
             if (!$canViewAll) {
                 $status = $service->orderStatusAble->status->name_en ?? null;
-                if ($status !== 'accepted') {
+                if ($status !== 'accepted' || ($isGuest && ! $this->serviceService->isPubliclyVisible($service))) {
                     return response()->json(['message' => 'Service not found'], 404);
                 }
             }

@@ -7,7 +7,7 @@ use App\Repositories\Food\Interface\FoodRepositoryInterface;
 
 class FoodRepository implements FoodRepositoryInterface
 {
-    private const DEFAULT_WITH = ['mainKey', 'serviceProvider.user', 'orderStatusAble.status', 'media'];
+    private const DEFAULT_WITH = ['mainKey', 'serviceProvider.user', 'serviceProvider.orderStatusAble.status', 'orderStatusAble.status', 'media'];
 
     public function all(array $filters = [])
     {
@@ -31,6 +31,12 @@ class FoodRepository implements FoodRepositoryInterface
 
         if (! empty($filters['accepted_only'])) {
             $query->whereHas('orderStatusAble.status', function ($statusQuery) {
+                $statusQuery->where('name_en', 'accepted');
+            });
+        }
+
+        if (! empty($filters['service_provider_accepted_only'])) {
+            $query->whereHas('serviceProvider.orderStatusAble.status', function ($statusQuery) {
                 $statusQuery->where('name_en', 'accepted');
             });
         }

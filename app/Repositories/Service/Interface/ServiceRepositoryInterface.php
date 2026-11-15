@@ -29,4 +29,6 @@ interface ServiceRepositoryInterface
     public function deleteService($service);
 
     public function findServiceModelById(int $id);
+
+    public function isPubliclyVisible(int $serviceId): bool;
 }

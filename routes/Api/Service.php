@@ -7,17 +7,16 @@ Route::controller(ServiceController::class)->prefix('service')
 ->group(function () {
     Route::get('/get-service-for-service-provider/{serviceProviderId?}', 'getServiceForServiceProvider')
         ->name('get-services-for-service-provider')
-        ->middleware('can.access:true,true,get_services');
+        ->middleware('can.access:true,true,get_services,true');
 
     Route::get('/get-details-of-service/{serviceId}', 'getDetailsOfService')
-        ->name('get-details-of-service')
-        ->middleware(['auth.api.or.owner']);
+        ->name('get-details-of-service');
 
     Route::post('/add-main-key', 'addMainKey')
         ->name('add-main-key')->middleware(['auth:owner']);
 
     Route::get('/get-main-keys', 'getMainKeys')
-        ->name('get-main-keys')->middleware(['auth.api.or.owner']);
+        ->name('get-main-keys');
 
     Route::put('/update-main-key/{id}', 'updateMainKey')
         ->name('update-main-key')->middleware(['auth:owner']);

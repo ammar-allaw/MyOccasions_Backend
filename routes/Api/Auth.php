@@ -9,10 +9,15 @@ Route::controller(AuthController::class)
         Route::post('login','login')->name('login');
         Route::post('login-service-provider','loginServiceProvider')->name('login-service-provider');
         Route::get('profile','profile')->name('profile')->middleware('auth:api');
+        Route::delete('client/account', 'deleteClientAccount')->name('client.account.destroy')
+            ->middleware(['auth:api', 'auth.client', 'throttle:account-deletion']);
         Route::post('logout','logout')->name('logout')->middleware('auth:api');
         Route::post('register','register')->name('register')->middleware('throttle:register-otp');
         Route::post('register/verify-otp','verifyRegistrationOtp')->name('register.verify-otp')->middleware('throttle:verify-register-otp');
         Route::post('register/resend-otp','resendRegistrationOtp')->name('register.resend-otp')->middleware('throttle:resend-register-otp');
+        Route::post('forgot-password','forgotPassword')->name('password.forgot')->middleware('throttle:forgot-password-otp');
+        Route::post('forgot-password/verify-otp','verifyPasswordResetOtp')->name('password.verify-otp')->middleware('throttle:forgot-password-verify-otp');
+        Route::post('forgot-password/reset','resetForgottenPassword')->name('password.reset')->middleware('throttle:forgot-password-reset');
         Route::post('/login-owner','loginOwner')->name('/login-owner');
         Route::post('/reset-password','resetPassword')->name('/reset-password')
         ->middleware('auth:owner');

@@ -31,5 +31,7 @@ interface ServiceServiceInterface
 
     public function findService($serviceId);
 
+    public function isPubliclyVisible(Service $service): bool;
+
     public function checkServiceable($service, $serviceProvider);
 }

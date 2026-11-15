@@ -170,6 +170,29 @@ class InteractionRepository implements InteractionRepositoryInterface
         ];
     }
 
+    public function deleteUserActivity(User $user): void
+    {
+        $likes = ModelLike::query()
+            ->where('user_id', $user->id)
+            ->lockForUpdate()
+            ->get(['likeable_type', 'likeable_id']);
+
+        foreach ($likes as $like) {
+            $counter = InteractionCounter::query()
+                ->where('interactable_type', $like->likeable_type)
+                ->where('interactable_id', $like->likeable_id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($counter && $counter->likes_count > 0) {
+                $counter->decrement('likes_count');
+            }
+        }
+
+        ModelLike::query()->where('user_id', $user->id)->delete();
+        ModelView::query()->where('user_id', $user->id)->delete();
+    }
+
     private function counterFor(Model $target): InteractionCounter
     {
         return InteractionCounter::firstOrCreate(

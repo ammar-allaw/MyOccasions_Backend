@@ -21,4 +21,6 @@ interface InteractionRepositoryInterface
     public function isLikedBy(Model $target, User $user): bool;
 
     public function likedTargetsForUser(User $user): array;
+
+    public function deleteUserActivity(User $user): void;
 }
